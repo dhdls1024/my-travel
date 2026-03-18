@@ -5,17 +5,20 @@
 import { useRef, useEffect, useState, useCallback } from "react"
 import Script from "next/script"
 
-import type { Place } from "@/types/travel"
+import type { Place, BusStop } from "@/types/travel"
 import { placeToLatLng } from "@/lib/map-utils"
 import { MARKER_COLORS } from "@/lib/constants"
 import { createPopupHTML } from "@/components/map/MarkerPopup"
+import TourBusRoute from "@/components/map/TourBusRoute"
 
 interface MapViewProps {
   // 지도에 표시할 장소 목록 (latitude/longitude가 있는 장소만 마커로 표시)
   places: Place[]
+  // 투어버스 정류장 목록 — 빈 배열이면 노선 오버레이 미표시
+  busStops?: BusStop[]
 }
 
-export default function MapView({ places }: MapViewProps) {
+export default function MapView({ places, busStops = [] }: MapViewProps) {
   // mapContainerRef: 카카오 지도 SDK가 DOM을 직접 제어하므로 ref로 관리
   const mapContainerRef = useRef<HTMLDivElement>(null)
 
@@ -241,6 +244,12 @@ export default function MapView({ places }: MapViewProps) {
       {/* 지도 컨테이너 — h-full로 부모 높이를 그대로 사용
           부모 컴포넌트에서 반드시 고정 높이를 지정해야 지도가 렌더링됨 */}
       <div ref={mapContainerRef} className="h-full w-full" />
+
+      {/* 투어버스 노선 오버레이 — 지도 초기화 완료 후 렌더링
+          busStops가 있을 때만 마운트하여 불필요한 카카오 API 호출 방지 */}
+      {isMapInitialized && busStops.length > 0 && (
+        <TourBusRoute map={mapRef.current} busStops={busStops} />
+      )}
     </div>
   )
 }

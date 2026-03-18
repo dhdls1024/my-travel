@@ -5,8 +5,8 @@
 
 import { Client, isNotionClientError, APIErrorCode, isFullPage } from "@notionhq/client"
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
-import type { Trip, Place, PlaceCategory, TripStatus } from "@/types/travel"
-import { searchPlaceCoords } from "@/lib/kakao-local"
+import type { Trip, Place, PlaceCategory, TripStatus, BusStop } from "@/types/travel"
+import { searchPlaceCoords, searchAddressCoords } from "@/lib/kakao-local"
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
 
@@ -394,4 +394,87 @@ export async function getPlaces(tripId: string): Promise<Place[]> {
   )
 
   return enriched
+}
+
+// ─── 투어버스 정류장 파서 ──────────────────────────────────────────────────────
+
+/**
+ * Notion API PageObjectResponse를 BusStop 도메인 타입으로 변환한다.
+ *
+ * DB 컬럼 매핑:
+ *   Order(number)    → order
+ *   Name(title)      → name
+ *   Address(rich_text) → address
+ *   URL(url)         → url
+ *
+ * @param page - Notion 페이지 응답 객체
+ * @returns BusStop 도메인 객체 (위경도 미포함 — getBusStops에서 보완)
+ */
+function parseBusStop(page: PageObjectResponse): BusStop {
+  const props = page.properties
+
+  return {
+    id: page.id,
+    name: extractTitle(props["Name"]),
+    address: extractRichText(props["Address"]),
+    // Order가 없는 경우 0으로 폴백 — null 반환 방어
+    order: extractNumber(props["Order"]) ?? 0,
+    url: extractUrl(props["URL"]),
+    // time: 운행 시간 정보 — rich_text 컬럼 ("1회: 09:40 / 2회: 10:40 ..." 형식)
+    time: extractRichText(props["time"]).trim() || undefined,
+  }
+}
+
+/**
+ * 특정 여행에 속한 투어버스 정류장 목록을 전부 조회한다.
+ *
+ * - Relations 25개 제한 대응: do-while + start_cursor 커서 페이지네이션
+ * - filter: "trips" relation이 tripId를 포함하는 항목만 조회
+ * - Address 컬럼값으로 카카오 로컬 API 좌표 자동 보완 (병렬 처리)
+ * - order 오름차순 정렬 후 반환
+ *
+ * @param tripId - 조회할 여행의 Notion 페이지 ID
+ * @returns BusStop 배열 (위경도 보완 완료, order 오름차순)
+ */
+export async function getBusStops(tripId: string): Promise<BusStop[]> {
+  const allResults: PageObjectResponse[] = []
+  let cursor: string | undefined = undefined
+
+  // 다음 페이지가 없을 때까지 반복 조회
+  do {
+    const response = await fetchWithRetry(() =>
+      notion.databases.query({
+        database_id: process.env.NOTION_BUS_STOPS_DB_ID!,
+        filter: {
+          property: "trips",
+          relation: { contains: tripId },
+        },
+        // cursor가 undefined이면 첫 페이지 조회
+        ...(cursor ? { start_cursor: cursor } : {}),
+      })
+    )
+
+    const fullPages = response.results.filter(isFullPage)
+    allResults.push(...fullPages)
+
+    cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
+  } while (cursor)
+
+  const busStops = allResults.map(parseBusStop)
+
+  // Address(지번 주소)로 카카오 주소 검색 API 좌표 보완 (병렬 처리)
+  // — searchAddressCoords 사용: address 컬럼은 장소명이 아닌 지번 주소이므로
+  //   키워드 검색(searchPlaceCoords)이 아닌 주소 검색 API가 정확함
+  const enriched = await Promise.all(
+    busStops.map(async (stop) => {
+      if (stop.latitude && stop.longitude) return stop
+      if (!stop.address) return stop
+      const coords = await searchAddressCoords(stop.address)
+      if (!coords) return stop
+      return { ...stop, latitude: coords.lat, longitude: coords.lng }
+    })
+  )
+
+  // order 오름차순 정렬 — Notion DB 조회 순서와 무관하게 항상 일관된 순서 보장
+  return enriched.sort((a, b) => a.order - b.order)
 }

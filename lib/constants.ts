@@ -81,6 +81,31 @@ export const CATEGORY_LIST = ["교통", "숙소", "맛집", "명소"] as const
 // 여행 상태 순서 보장 배열 — 상태 뱃지/셀렉트 UI 렌더링 순서 고정용
 export const TRIP_STATUS_LABELS = ["계획중", "확정", "완료"] as const
 
+// ─── 동해시 투어버스 노선 관련 상수 ───────────────────────────────────────────
+
+// 투어버스 폴리라인 색상 — 관광 노선 강조를 위해 amber 계열 사용
+export const TOUR_BUS_LINE_COLOR = "#F59E0B" // amber-500
+
+// 투어버스 폴리라인 두께 (픽셀)
+export const TOUR_BUS_LINE_WIDTH = 4
+
+// 투어버스 정류장 마커 크기 (픽셀)
+export const TOUR_BUS_STOP_SIZE = 28
+
+// 출발/도착 정류장(0번) 마커 색상 — 일반 정류장과 구분
+export const TOUR_BUS_ORIGIN_COLOR = "#EF4444" // red-500
+
+// 일반 정류장 마커 색상
+export const TOUR_BUS_STOP_COLOR = "#3B82F6" // blue-500
+
+// 화살표 오버레이 표시 간격 — 폴리라인 구간 중에서 n번째마다 화살표 표시
+export const TOUR_BUS_ARROW_INTERVAL = 1
+
+// 동해시 중심 좌표 — 지도 초기 중심 및 로컬 API 위치 바이어스 기준점
+export const DONGHAE_CENTER = { lat: 37.5245, lng: 129.114 } as const
+
+// ─── 사이트 메타데이터 상수 ──────────────────────────────────────────────────
+
 // 사이트 메타데이터 상수
 export const SITE_CONFIG = {
   name: "나만의 여행 플래너",

@@ -1,4 +1,17 @@
 // 여행 플래너 도메인 타입 정의
+
+// 투어버스 정류장 타입 — Notion Bus Stops DB 한 row에 해당
+// 위경도는 Notion DB에 저장하지 않고 getBusStops()에서 카카오 로컬 API로 자동 보완
+export interface BusStop {
+  id: string
+  name: string
+  address: string
+  order: number
+  url?: string        // 네이버 지도 등 외부 URL (선택)
+  time?: string       // 운행 시간 정보 — Notion time 컬럼 (rich_text)
+  latitude?: number   // 위도 — 카카오 로컬 API로 자동 보완
+  longitude?: number  // 경도 — 카카오 로컬 API로 자동 보완
+}
 // Place 카테고리 유니온 타입 — Notion DB 속성값과 1:1 매핑
 export type PlaceCategory = "교통" | "숙소" | "맛집" | "명소"
 

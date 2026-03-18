@@ -6,7 +6,8 @@
 import { useState, useMemo } from "react"
 import dynamic from "next/dynamic"
 
-import type { Place } from "@/types/travel"
+import type { Place, BusStop } from "@/types/travel"
+import { cn } from "@/lib/utils"
 import {
   Select,
   SelectContent,
@@ -31,6 +32,8 @@ const MapViewDynamic = dynamic(() => import("@/components/map/MapView"), {
 
 interface MapViewWrapperProps {
   places: Place[]
+  // 투어버스 정류장 목록 — 없으면 토글 버튼 자체를 숨김
+  busStops?: BusStop[]
 }
 
 // formatDateLabel — ISO 날짜 문자열(앞 10자리)을 "M월 D일" 형태로 변환
@@ -91,11 +94,14 @@ function isPlaceInDateRange(place: Place, selectedDate: string): boolean {
   return placeDate === selectedDate
 }
 
-export default function MapViewWrapper({ places }: MapViewWrapperProps) {
+export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapperProps) {
   // selectedDate: 현재 선택된 날짜 (undefined = 전체 표시)
   const [selectedDate, setSelectedDate] = useState<string | undefined>(
     undefined
   )
+
+  // showTourBus: 투어버스 노선 표시 여부 — 기본값 true (처음부터 노선 표시)
+  const [showTourBus, setShowTourBus] = useState(true)
 
   // uniqueDates: places에서 추출한 고유 날짜 목록
   // places가 변경될 때만 재계산 (useMemo로 최적화)
@@ -115,10 +121,11 @@ export default function MapViewWrapper({ places }: MapViewWrapperProps) {
 
   return (
     <div className="relative h-full w-full">
-      {/* 날짜 필터 UI — 지도 위 우상단에 absolute로 오버레이 표시
+      {/* 우상단 오버레이 컨트롤 영역 — 날짜 필터 + 투어버스 토글 세로 배치
           z-10: 지도 컨트롤 위에 표시 */}
-      {uniqueDates.length > 0 && (
-        <div className="absolute right-3 top-3 z-10">
+      <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-2">
+        {/* 날짜 필터 Select — 고유 날짜가 있을 때만 표시 */}
+        {uniqueDates.length > 0 && (
           <Select
             value={selectedDate ?? ALL_DATES_VALUE}
             onValueChange={handleDateChange}
@@ -136,11 +143,30 @@ export default function MapViewWrapper({ places }: MapViewWrapperProps) {
               ))}
             </SelectContent>
           </Select>
-        </div>
-      )}
+        )}
 
-      {/* MapView에 필터링된 places 전달 — 날짜 변경 시 마커만 재렌더링 */}
-      <MapViewDynamic places={filteredPlaces} />
+        {/* 투어버스 노선 토글 버튼 — busStops가 있을 때만 표시 */}
+        {busStops.length > 0 && (
+          <button
+            onClick={() => setShowTourBus((v) => !v)}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-xs font-medium shadow-md transition-colors",
+              showTourBus
+                ? "bg-amber-500 text-white"
+                : "border border-gray-200 bg-white text-gray-600"
+            )}
+          >
+            🚌 투어버스 노선
+          </button>
+        )}
+      </div>
+
+      {/* MapView에 필터링된 places와 busStops 전달
+          showTourBus가 false이면 빈 배열 전달 → TourBusRoute 미표시 */}
+      <MapViewDynamic
+        places={filteredPlaces}
+        busStops={showTourBus ? busStops : []}
+      />
     </div>
   )
 }
