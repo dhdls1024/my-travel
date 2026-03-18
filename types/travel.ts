@@ -22,7 +22,8 @@ export interface Place {
   name: string
   category: PlaceCategory
   tripId: string        // Trip Relation ID (trips 컬럼)
-  visitDate?: string    // 방문일 (선택)
+  visitDate?: string    // 방문일 시작 (선택)
+  visitDateEnd?: string // 방문일 종료 — Notion 날짜 범위 입력 시 사용 (선택)
   latitude?: number     // 위도 — 카카오 지도 마커 표시에 사용
   longitude?: number    // 경도 — 카카오 지도 마커 표시에 사용
   memo?: string         // 메모 (선택)

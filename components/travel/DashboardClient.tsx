@@ -51,11 +51,23 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
   }, [places])
 
   // ── 방문 날짜 목록 추출 ────────────────────────────────────────────────────
-  // visitDate 가 있는 장소만 추출 → 중복 제거 → 오름차순 정렬
+  // visitDate 가 있는 장소의 날짜를 수집
+  // 범위 날짜(visitDateEnd 존재)인 경우 start~end 사이의 모든 날짜를 전개하여 추가
+  // 중복 제거 → 오름차순 정렬
   const availableDates = useMemo(() => {
     const dateSet = new Set<string>()
     for (const place of places) {
-      if (place.visitDate) {
+      if (!place.visitDate) continue
+      if (place.visitDateEnd) {
+        // 범위 날짜 전개: start부터 end까지 하루씩 추가
+        const start = new Date(place.visitDate)
+        const end = new Date(place.visitDateEnd)
+        const cur = new Date(start)
+        while (cur <= end) {
+          dateSet.add(cur.toISOString().slice(0, 10))
+          cur.setDate(cur.getDate() + 1)
+        }
+      } else {
         dateSet.add(place.visitDate)
       }
     }
@@ -73,8 +85,15 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
     }
 
     // 2. 날짜 필터 (null 이면 전체 통과)
+    // 범위 날짜(visitDateEnd 존재)인 경우 start~end 사이에 선택 날짜가 포함되면 매칭
     if (selectedDate !== null) {
-      result = result.filter((p) => p.visitDate === selectedDate)
+      result = result.filter((p) => {
+        if (!p.visitDate) return false
+        if (p.visitDateEnd) {
+          return p.visitDate <= selectedDate && selectedDate <= p.visitDateEnd
+        }
+        return p.visitDate === selectedDate
+      })
     }
 
     return result

@@ -50,9 +50,12 @@ export default function PlaceCard({ place }: PlaceCardProps) {
             </Badge>
 
             {/* 방문일 — visitDate가 있을 때만 표시 */}
+            {/* visitDateEnd가 있으면 "M월 d일 ~ M월 d일" 범위 형식으로 표시 */}
             {place.visitDate && (
               <span className="text-muted-foreground text-xs">
-                {format(parseISO(place.visitDate), "M월 d일")}
+                {place.visitDateEnd
+                  ? `${format(parseISO(place.visitDate), "M월 d일")} ~ ${format(parseISO(place.visitDateEnd), "M월 d일")}`
+                  : format(parseISO(place.visitDate), "M월 d일")}
               </span>
             )}
           </div>
