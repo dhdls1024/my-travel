@@ -28,6 +28,7 @@ export const DUMMY_TRIPS: Trip[] = [
 
 // 샘플 장소 15개: 제주도 8개 + 오사카 7개
 // 카테고리별로 골고루 분포 (교통/숙소/맛집/명소)
+// checked: false — 더미 데이터는 미체크 상태로 초기화
 export const DUMMY_PLACES: Place[] = [
   // === 제주도 장소 (8개) ===
   {
@@ -39,6 +40,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 33.5104,
     longitude: 126.4914,
     memo: "김포→제주 10:00 출발",
+    checked: false,
   },
   {
     id: "place-jeju-02",
@@ -49,6 +51,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 33.5070,
     longitude: 126.4927,
     memo: "공항 근처 픽업",
+    checked: false,
   },
   {
     id: "place-jeju-03",
@@ -60,6 +63,7 @@ export const DUMMY_PLACES: Place[] = [
     longitude: 126.8410,
     memo: "오션뷰 디럭스룸",
     url: "https://www.haevichi.com",
+    checked: false,
   },
   {
     id: "place-jeju-04",
@@ -70,6 +74,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 33.4590,
     longitude: 126.9425,
     memo: "일출 명소, 유네스코 세계자연유산",
+    checked: false,
   },
   {
     id: "place-jeju-05",
@@ -80,6 +85,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 33.5030,
     longitude: 126.9517,
     memo: "배편 성산→우도 30분",
+    checked: false,
   },
   {
     id: "place-jeju-06",
@@ -90,6 +96,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 33.5100,
     longitude: 126.5199,
     memo: "제주 흑돼지 구이 맛집 골목",
+    checked: false,
   },
   {
     id: "place-jeju-07",
@@ -100,6 +107,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 33.2447,
     longitude: 126.2550,
     memo: "중문 해안 오션뷰 카페",
+    checked: false,
   },
   {
     id: "place-jeju-08",
@@ -110,6 +118,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 33.3530,
     longitude: 126.5340,
     memo: "왕복 약 4시간, 윗세오름 대피소까지",
+    checked: false,
   },
 
   // === 오사카 장소 (7개) ===
@@ -122,6 +131,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 34.4347,
     longitude: 135.2441,
     memo: "인천→간사이 14:00 도착",
+    checked: false,
   },
   {
     id: "place-osaka-02",
@@ -132,6 +142,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 34.4347,
     longitude: 135.2441,
     memo: "공항→난바 특급열차 34분",
+    checked: false,
   },
   {
     id: "place-osaka-03",
@@ -143,6 +154,7 @@ export const DUMMY_PLACES: Place[] = [
     longitude: 135.5013,
     memo: "난바역 도보 3분",
     url: "https://www.hotel-vista.jp",
+    checked: false,
   },
   {
     id: "place-osaka-04",
@@ -153,6 +165,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 34.6687,
     longitude: 135.5013,
     memo: "글리코 간판, 야경 필수",
+    checked: false,
   },
   {
     id: "place-osaka-05",
@@ -163,6 +176,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 34.6686,
     longitude: 135.5020,
     memo: "1인 좌석 톤코츠 라멘",
+    checked: false,
   },
   {
     id: "place-osaka-06",
@@ -173,6 +187,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 34.6873,
     longitude: 135.5262,
     memo: "천수각 전망대, 공원 산책",
+    checked: false,
   },
   {
     id: "place-osaka-07",
@@ -183,6 +198,7 @@ export const DUMMY_PLACES: Place[] = [
     latitude: 34.6625,
     longitude: 135.5065,
     memo: "오사카의 부엌, 해산물 먹거리",
+    checked: false,
   },
 ]
 

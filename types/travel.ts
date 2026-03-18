@@ -16,7 +16,7 @@ export interface Trip {
 }
 
 // 장소 인터페이스 — Notion Place DB 한 row에 해당
-// 실제 DB 컬럼: Name, Category, Latitude, Longitude, Memo, URL, VisitDate, trips
+// 실제 DB 컬럼: Name, Category, Latitude, Longitude, Memo, URL, VisitDate, trips, Cost, CheckBox
 export interface Place {
   id: string
   name: string
@@ -28,4 +28,6 @@ export interface Place {
   longitude?: number    // 경도 — 카카오 지도 마커 표시에 사용
   memo?: string         // 메모 (선택)
   url?: string          // 카카오맵 등 외부 링크 (선택)
+  cost?: number         // 예상 비용 (선택) — Notion number 타입
+  checked: boolean      // 체크박스 — Notion checkbox 타입 (기본값 false)
 }

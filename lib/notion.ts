@@ -6,6 +6,7 @@
 import { Client, isNotionClientError, APIErrorCode, isFullPage } from "@notionhq/client"
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import type { Trip, Place, PlaceCategory, TripStatus } from "@/types/travel"
+import { searchPlaceCoords } from "@/lib/kakao-local"
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
 
@@ -184,18 +185,6 @@ function extractFileUrl(
 }
 
 /**
- * Notion number 속성에서 숫자를 추출한다.
- * @param prop - Notion 속성 객체
- * @returns 숫자 (없으면 undefined)
- */
-function extractNumber(
-  prop: PageObjectResponse["properties"][string]
-): number | undefined {
-  if (prop.type !== "number") return undefined
-  return prop.number ?? undefined
-}
-
-/**
  * Notion url 속성에서 URL 문자열을 추출한다.
  * @param prop - Notion 속성 객체
  * @returns URL 문자열 (없으면 undefined)
@@ -205,6 +194,33 @@ function extractUrl(
 ): string | undefined {
   if (prop.type !== "url") return undefined
   return prop.url ?? undefined
+}
+
+/**
+ * Notion number 속성에서 숫자 값을 추출한다.
+ * Notion에서 값이 비어 있으면 null이 반환되므로 undefined로 변환한다.
+ * @param prop - Notion 속성 객체
+ * @returns 숫자 값 (없으면 undefined)
+ */
+function extractNumber(
+  prop: PageObjectResponse["properties"][string]
+): number | undefined {
+  if (prop.type !== "number") return undefined
+  // Notion API는 빈 number를 null로 반환 — undefined로 정규화
+  return prop.number ?? undefined
+}
+
+/**
+ * Notion checkbox 속성에서 불리언 값을 추출한다.
+ * 체크박스가 없거나 타입이 다르면 false를 기본값으로 반환한다.
+ * @param prop - Notion 속성 객체
+ * @returns 체크 여부 (기본값 false)
+ */
+function extractCheckbox(
+  prop: PageObjectResponse["properties"][string]
+): boolean {
+  if (prop.type !== "checkbox") return false
+  return prop.checkbox
 }
 
 /**
@@ -285,7 +301,8 @@ function parsePlace(page: PageObjectResponse): Place {
   return {
     id: page.id,
     // 실제 Notion DB 컬럼명: Name(title), Category(select), trips(relation)
-    // VisitDate(date), Longitude/Latitude(select), Memo(rich_text), URL(url)
+    // VisitDate(date), Memo(rich_text), URL(url)
+    // 위경도는 Notion DB에 저장하지 않음 — getPlaces()에서 카카오 로컬 API로 자동 보완
     name: extractTitle(props["Name"]),
     // 카테고리 기본값: "명소" — DB에 값이 없을 때 지도 마커 표시 보장
     category: (extractSelect(props["Category"]) ?? "명소") as PlaceCategory,
@@ -293,12 +310,13 @@ function parsePlace(page: PageObjectResponse): Place {
     visitDate: extractDate(props["VisitDate"]),
     // 숙소처럼 체크인~체크아웃 기간을 날짜 범위로 입력한 경우 end 날짜도 저장
     visitDateEnd: extractDateEnd(props["VisitDate"]),
-    // Latitude/Longitude는 select 타입으로 저장 — 문자열을 숫자로 변환
-    latitude: parseFloat(extractSelect(props["Latitude"]) ?? "") || undefined,
-    longitude: parseFloat(extractSelect(props["Longitude"]) ?? "") || undefined,
     // "null" 문자열은 빈 값으로 처리 — Notion DB에 "null"로 입력된 경우 방어
     memo: extractRichText(props["Memo"]).trim().replace(/^null$/i, "") || undefined,
     url: extractUrl(props["URL"]),
+    // Cost: 예상 비용 (선택) — 입력되지 않으면 undefined
+    cost: extractNumber(props["Cost"]),
+    // CheckBox: 방문 완료 여부 등 체크용 — 기본값 false
+    checked: extractCheckbox(props["CheckBox"]),
   }
 }
 
@@ -331,9 +349,10 @@ export async function getTrips(): Promise<Trip[]> {
  *
  * - Relations 25개 제한 대응: do-while + start_cursor 커서 페이지네이션
  * - filter: "여행" relation이 tripId를 포함하는 항목만 조회
+ * - 위경도 없는 장소: 카카오 로컬 API로 자동 보완 (병렬 처리)
  *
  * @param tripId - 조회할 여행의 Notion 페이지 ID
- * @returns Place 배열
+ * @returns Place 배열 (위경도 보완 완료)
  */
 export async function getPlaces(tripId: string): Promise<Place[]> {
   const allResults: PageObjectResponse[] = []
@@ -360,5 +379,19 @@ export async function getPlaces(tripId: string): Promise<Place[]> {
     cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
   } while (cursor)
 
-  return allResults.map(parsePlace)
+  const places = allResults.map(parsePlace)
+
+  // 위경도 없는 장소만 카카오 로컬 API로 보완 (병렬 처리)
+  // — Promise.all로 병렬 실행하여 순차 호출보다 빠르게 처리
+  const enriched = await Promise.all(
+    places.map(async (place) => {
+      // 위경도가 이미 있으면 그대로 반환 — 불필요한 API 호출 방지
+      if (place.latitude && place.longitude) return place
+      const coords = await searchPlaceCoords(place.name)
+      if (!coords) return place
+      return { ...place, latitude: coords.lat, longitude: coords.lng }
+    })
+  )
+
+  return enriched
 }

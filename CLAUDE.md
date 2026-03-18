@@ -33,20 +33,21 @@ app/
 - `components/ui/` — shadcn/ui 자동 생성, **직접 수정 금지**
 - `components/layout/` — Header, Footer, Container, MobileNav
 - `components/sections/` — 페이지 섹션 (HeroSection 등)
-- `components/common/` — 여러 페이지에서 재사용하는 공통 컴포넌트
-- `components/travel/` — 여행 플래너 전용 컴포넌트 (구현 예정)
-- `components/map/` — 카카오 지도 관련 컴포넌트 (구현 예정)
+- `components/common/` — BackButton, PageHeader, ThemeToggle 등 공통 컴포넌트
+- `components/travel/` — TripCard, TripSummary, CategoryTabs, DateFilter, PlaceCard, DashboardClient 등
+- `components/map/` — MapView, MapViewWrapper, PlaceMarker, MarkerPopup
 
 **lib/ 파일 역할**:
 - `lib/utils.ts` — `cn()` 유틸리티만 포함
 - `lib/constants.ts` — 모든 정적 상수 (`ROUTES`, `MARKER_COLORS`, `CATEGORY_LABELS` 등)
-- `lib/notion.ts` — Notion 클라이언트 + `fetchWithRetry` (구현 예정)
-- `lib/map-utils.ts` — `window.kakao` 타입 선언, 마커 유틸리티 (구현 예정)
-- `lib/date-utils.ts` — D-Day 계산, UTC ↔ Asia/Seoul 변환 (구현 예정)
+- `lib/notion.ts` — Notion 클라이언트 + `fetchWithRetry` (지수 백오프 재시도), `getTrips()`, `getPlaces(tripId)`
+- `lib/map-utils.ts` — `window.kakao` 타입 선언, `Place` → `kakao.maps.LatLng` 변환 유틸리티
+- `lib/date-utils.ts` — D-Day 계산, UTC ↔ Asia/Seoul 변환 (`parseNotionDate`, `calculateDday`)
+- `lib/dummy-data.ts` — 개발용 더미 데이터 (Trip[], Place[])
 
 **타입 파일**:
 - `types/index.ts` — 공용 타입 (NavItem, TechStackItem 등)
-- `types/travel.ts` — 여행 플래너 도메인 타입 (Trip, Place, PlaceCategory — 구현 예정)
+- `types/travel.ts` — `Trip`, `Place`, `PlaceCategory`(`'교통'|'숙소'|'맛집'|'명소'`), `TripStatus`(`'계획중'|'확정'|'완료'`)
 
 ## 핵심 패턴
 
@@ -68,8 +69,12 @@ ROUTES.travel.dashboard(tripId)  // "/travel/[tripId]"
 
 **Notion API 패턴**:
 - `lib/notion.ts`는 서버 사이드 전용 (`window` 접근 시 throw)
-- Relations 필터: `filter: { property: "Trip", relation: { contains: tripId } }`
+- Places → Trips 단방향 Relation 필터: `filter: { property: "trips", relation: { contains: tripId } }`
 - 커서 페이지네이션: `do-while` + `start_cursor` (Relations 25개 제한 대응)
+- `fetchWithRetry()`: 429 → 1s/2s/4s 재시도, 5xx → 0.5s/1s 재시도, 401 → 즉시 실패
+- Notion DB 실제 컬럼명: `Name`, `StartDate`, `EndDate`, `Status`(status 타입), `CoverImage`, `Category`, `VisitDate`, `Memo`, `URL`, `trips`(Relation)
+- 위경도는 Notion DB에 저장하지 않음 — `getPlaces()`에서 카카오 로컬 API(`lib/kakao-local.ts`)로 장소명 검색해 자동 보완
+- `VisitDate`는 단일 날짜 또는 start~end 범위(`Place.visitDateEnd`)로 입력 가능; Memo가 `"null"` 문자열인 경우 빈값 처리
 
 **외부 이미지 도메인** (`next.config.ts`에 등록됨):
 - `**.notion.so` — Notion 커버 이미지
@@ -84,6 +89,17 @@ ROUTES.travel.dashboard(tripId)  // "/travel/[tripId]"
 - 공유 타입은 반드시 `types/index.ts` 또는 `types/travel.ts`에 선언
 - 함수 30줄 초과 시 분리
 - 주석: 함수/메서드 역할 주석 필수, 복잡한 설계 결정은 이유 주석 추가
+
+## 개발 워크플로우
+
+새 작업은 `/tasks/XXX-description.md` 형식으로 생성하고, 완료 후 `docs/ROADMAP.md`를 업데이트한다. API/비즈니스 로직 작업 시 Playwright MCP로 E2E 테스트 수행 필수. 구현 현황은 `docs/ROADMAP.md` 참고.
+
+**현재 구현 완료 (Phase 0~3 일부)**:
+- Phase 1 (Task 001~003): 환경설정, 타입 정의, 라우트 골격
+- Phase 2 (Task 004~007): 더미 데이터 기반 전체 UI 완성
+- Phase 3 (Task 008~010): Notion API 연동, 날짜 필터링, 버그픽스
+
+**다음 작업**: Task 012 (On-demand ISR 새로고침 버튼)
 
 ## Claude Code Hooks
 
