@@ -1,24 +1,13 @@
 // 카카오 지도 페이지 — 서버 컴포넌트
-// MapViewClient는 dynamic import(ssr:false)로 클라이언트에서만 렌더링
+// MapViewWrapper: dynamic ssr:false를 클라이언트 컴포넌트에서 처리 (서버 컴포넌트에선 불가)
 import type { Metadata } from "next"
 import Link from "next/link"
-import dynamic from "next/dynamic"
 import { ArrowLeft } from "lucide-react"
 import { notFound } from "next/navigation"
 
 import { ROUTES, SITE_CONFIG } from "@/lib/constants"
 import { getTripById, getPlacesByTripId } from "@/lib/dummy-data"
-
-// MapViewClient: ssr:false — 카카오 SDK는 브라우저 전용 API이므로 서버 렌더링 불가
-const MapViewClient = dynamic(() => import("@/components/map/MapView"), {
-  ssr: false,
-  loading: () => (
-    // 지도 로딩 중 플레이스홀더 — 지도 영역과 동일한 높이 유지하여 레이아웃 시프트 방지
-    <div className="flex h-[calc(100vh-56px)] w-full items-center justify-center bg-gray-100">
-      <p className="text-muted-foreground text-sm">지도를 불러오는 중...</p>
-    </div>
-  ),
-})
+import MapViewWrapper from "@/components/map/MapViewWrapper"
 
 // Next.js 15: params는 Promise로 래핑되어 전달됨 (await 필수)
 type Params = Promise<{ tripId: string }>
@@ -81,8 +70,8 @@ export default async function TravelMapPage({ params }: { params: Params }) {
 
       {/* 지도 영역 — flex-1로 헤더를 제외한 나머지 높이 전부 사용 */}
       <div className="flex-1 overflow-hidden">
-        {/* MapViewClient 삽입 자리 — ssr:false dynamic import로 브라우저에서만 렌더링 */}
-        <MapViewClient places={placesWithCoords} />
+        {/* MapViewWrapper — dynamic ssr:false가 내부 클라이언트 컴포넌트에서 처리됨 */}
+        <MapViewWrapper places={placesWithCoords} />
       </div>
     </div>
   )
