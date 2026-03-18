@@ -1,11 +1,10 @@
 // 여행 목록 페이지 — 서버 컴포넌트
-// 더미 데이터 기반으로 Trip 카드 그리드를 렌더링
-// Phase 3에서 Notion API(getTrips)로 데이터 소스 교체 예정
+// Notion Trip DB에서 여행 목록을 조회하여 카드 그리드로 렌더링
 import { Suspense } from "react"
 import type { Metadata } from "next"
 
 import { SITE_CONFIG } from "@/lib/constants"
-import { DUMMY_TRIPS, getPlacesByTripId } from "@/lib/dummy-data"
+import { getTrips } from "@/lib/notion"
 import TripCard from "@/components/travel/TripCard"
 import TripCardSkeleton from "@/components/travel/TripCardSkeleton"
 
@@ -33,11 +32,10 @@ function TripListSkeleton() {
 }
 
 // 실제 여행 목록 컴포넌트 — 비동기 데이터 로딩 분리를 위한 별도 컴포넌트
-// TODO: Phase 3에서 getTrips() 호출로 교체
+// Suspense로 감싸서 스트리밍 SSR 활용 (초기 HTML에 스켈레톤 포함)
 async function TripList() {
-  // TODO: 아래 주석을 해제하고 Notion 연동 후 DUMMY_TRIPS 제거
-  // const trips = await getTrips()
-  const trips = DUMMY_TRIPS
+  // Notion Trip DB에서 전체 여행 목록 조회 (출발일 내림차순)
+  const trips = await getTrips()
 
   // 여행이 없을 때 빈 상태 메시지 표시
   if (trips.length === 0) {
@@ -59,8 +57,9 @@ async function TripList() {
         <TripCard
           key={trip.id}
           trip={trip}
-          // 각 여행의 장소 수 계산
-          placesCount={getPlacesByTripId(trip.id).length}
+          // Notion 여행 목록 조회 시 장소 수는 별도 조회가 필요하므로 0으로 표시
+          // 여행 대시보드 페이지에서 실제 장소 수를 확인할 수 있음
+          placesCount={0}
         />
       ))}
     </div>

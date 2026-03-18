@@ -1,11 +1,11 @@
 // 여행 대시보드 페이지 — 서버 컴포넌트
-// 더미 데이터에서 Trip + Place[] 를 조회한 뒤 DashboardClient 에 props로 전달
+// Notion API에서 Trip + Place[] 를 조회한 뒤 DashboardClient 에 props로 전달
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
 import { SITE_CONFIG } from "@/lib/constants"
-import { getTripById, getPlacesByTripId } from "@/lib/dummy-data"
+import { getTrips, getPlaces } from "@/lib/notion"
 import DashboardClient from "@/components/travel/DashboardClient"
 import PlaceCardSkeleton from "@/components/travel/PlaceCardSkeleton"
 
@@ -19,7 +19,10 @@ export async function generateMetadata({
   params: Params
 }): Promise<Metadata> {
   const { tripId } = await params
-  const trip = getTripById(tripId)
+
+  // getTrips — Notion Trip DB 전체 조회 후 해당 tripId 탐색
+  const trips = await getTrips()
+  const trip = trips.find((t) => t.id === tripId)
 
   // Trip 이 없으면 기본 타이틀 반환 (notFound 는 page 에서 처리)
   const tripTitle = trip?.title ?? "여행 대시보드"
@@ -52,22 +55,22 @@ export default async function TravelDashboardPage({
 }) {
   const { tripId } = await params
 
-  // 더미 데이터에서 Trip 조회 — 없으면 404
-  const trip = getTripById(tripId)
+  // getTrips — Notion Trip DB 전체 조회 후 해당 tripId 탐색, 없으면 404
+  const trips = await getTrips()
+  const trip = trips.find((t) => t.id === tripId)
   if (!trip) {
     notFound()
   }
 
-  // 해당 Trip 의 장소 목록 조회
-  const places = getPlacesByTripId(tripId)
+  // getPlaces — tripId 기준으로 연결된 장소 목록 전체 조회 (커서 페이지네이션 내장)
+  const places = await getPlaces(tripId)
 
   return (
     <main className="min-h-screen">
       {/*
-       * Suspense 로 감싸는 이유:
-       * Phase 3에서 Notion API 비동기 호출로 전환될 때
-       * DashboardClient 내부에 서버 컴포넌트가 추가될 수 있음.
-       * 지금은 주로 PlaceCardSkeleton fallback 확인 용도.
+       * Suspense로 감싸는 이유:
+       * DashboardClient 내부에 서버 컴포넌트가 추가될 때를 대비하여
+       * 스트리밍 로딩 UI를 미리 적용해둠
        */}
       <Suspense fallback={<PlaceListSkeleton />}>
         <DashboardClient trip={trip} places={places} />

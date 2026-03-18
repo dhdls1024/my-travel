@@ -27,7 +27,7 @@ export default async function TestPage() {
     NOTION_API_KEY: !!process.env.NOTION_API_KEY,
     NOTION_TRIPS_DB_ID: !!process.env.NOTION_TRIPS_DB_ID,
     NOTION_PLACES_DB_ID: !!process.env.NOTION_PLACES_DB_ID,
-    NEXT_PUBLIC_KAKAO_MAP_APP_KEY: !!process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY,
+    NEXT_PUBLIC_KAKAO_MAP_KEY: !!process.env.NEXT_PUBLIC_KAKAO_MAP_KEY,
   }
 
   // API 호출 결과 (실패 시 에러 메시지 캡처)

@@ -4,6 +4,14 @@
 // format — Date 객체를 지정된 포맷 문자열로 변환
 import { differenceInDays, parseISO, format } from "date-fns"
 
+// date-fns-tz: 타임존 변환 유틸리티 라이브러리
+// toZonedTime — UTC Date → 특정 시간대 Date 변환 (표시용)
+// fromZonedTime — 특정 시간대 Date → UTC Date 변환 (저장/필터용)
+import { toZonedTime, fromZonedTime } from "date-fns-tz"
+
+// Notion date 속성 및 KST 필터 기준 시간대 상수
+const TIMEZONE_SEOUL = "Asia/Seoul"
+
 // D-Day 문자열 반환값 상수 — 매직 스트링 방지
 const DDAY_TODAY = "D-Day"
 const DDAY_TRAVELING = "여행중"
@@ -95,4 +103,47 @@ export function calculateNights(startDate: string, endDate: string): string {
   const days = nights + 1
 
   return `${nights}박 ${days}일`
+}
+
+/**
+ * Notion date 속성 문자열을 Asia/Seoul 기준 Date 객체로 변환한다.
+ *
+ * Notion은 날짜를 "2026-04-10" 형식의 순수 날짜 문자열로 저장한다.
+ * parseISO만 사용하면 로컬 타임존에 따라 결과가 달라지므로,
+ * 명시적으로 Asia/Seoul 기준 자정(00:00:00)으로 변환한다.
+ *
+ * 설계 결정:
+ * - parseISO("2026-04-10")은 시간 없는 날짜를 UTC 자정으로 해석하기 때문에
+ *   KST(+9) 환경에서 표시하면 전날로 보일 수 있음.
+ * - toZonedTime으로 Seoul 자정 기준 Date를 생성해 이 문제를 방지.
+ *
+ * @param dateStr - Notion date 속성 문자열 (예: "2026-04-10")
+ * @returns Asia/Seoul 기준 자정 Date 객체
+ */
+export function parseNotionDate(dateStr: string): Date {
+  // parseISO로 우선 Date 객체를 생성한 뒤 Seoul 시간대로 변환
+  const utcDate = parseISO(dateStr)
+  return toZonedTime(utcDate, TIMEZONE_SEOUL)
+}
+
+/**
+ * Date 객체를 Notion filter에 사용할 ISO 8601 UTC 문자열로 변환한다.
+ *
+ * Notion API의 date filter는 UTC 기준 ISO 8601 문자열을 요구한다.
+ * KST 기준 Date를 fromZonedTime으로 UTC로 역변환 후 toISOString()을 사용한다.
+ *
+ * 사용 예:
+ *   KST 2026-04-10 00:00:00 → "2026-04-09T15:00:00.000Z" (UTC)
+ *
+ * 설계 결정:
+ * - Notion filter에 KST Date를 직접 넣으면 UTC 기준으로 잘못된 날짜 범위를 조회하게 됨.
+ * - fromZonedTime으로 "이 Date는 Seoul 시간대" 임을 명시해 올바른 UTC 값을 얻는다.
+ *
+ * @param date - Asia/Seoul 기준 Date 객체
+ * @returns UTC 기준 ISO 8601 문자열 (예: "2026-04-09T15:00:00.000Z")
+ */
+export function formatDateForNotionFilter(date: Date): string {
+  // Seoul 기준 date를 UTC로 역변환 후 ISO 문자열 반환
+  const utcDate = fromZonedTime(date, TIMEZONE_SEOUL)
+  return utcDate.toISOString()
 }
