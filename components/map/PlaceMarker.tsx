@@ -1,8 +1,10 @@
-// 카테고리별 색상 마커 컴포넌트 — 카카오 CustomOverlay로 렌더링
-// 카카오 지도 위에 카테고리 색상별 마커를 표시
+// PlaceMarker — 카카오 CustomOverlay 마커 HTML 생성 유틸리티
+// MapView에서 직접 마커 DOM을 생성하므로 독립 React 컴포넌트로는 사용하지 않음
+// 마커 스타일 변경 시 이 파일의 createMarkerContent만 수정하면 됨
 "use client"
 
 import type { Place } from "@/types/travel"
+import { MARKER_COLORS } from "@/lib/constants"
 
 interface PlaceMarkerProps {
   place: Place
@@ -11,14 +13,27 @@ interface PlaceMarkerProps {
   map: any
 }
 
-// TODO: Task007에서 구현 예정
-// - MARKER_COLORS 상수 기반 카테고리별 색상 마커
-// - kakao.maps.CustomOverlay로 커스텀 마커 생성
-// - 클릭 시 MarkerPopup 표시
-export default function PlaceMarker({ place, map }: PlaceMarkerProps) {
-  // 좌표가 없으면 렌더링하지 않음
-  if (!place.latitude || !place.longitude) return null
+// createMarkerContent — 카테고리 컬러 원형 마커 HTML 문자열 생성
+// kakao.maps.CustomOverlay의 content 속성에 직접 삽입하여 사용
+// data-place-id 속성: MapView에서 DOM 클릭 이벤트 바인딩 시 마커를 특정하는 데 사용
+export function createMarkerContent(place: Place): string {
+  const color = MARKER_COLORS[place.category]
+  return `
+    <div style="
+      width:28px; height:28px; border-radius:50%;
+      background:${color}; border:2px solid #fff;
+      box-shadow:0 2px 6px rgba(0,0,0,0.3);
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+    " data-place-id="${place.id}">
+      <div style="width:8px;height:8px;border-radius:50%;background:#fff;"></div>
+    </div>
+  `
+}
 
-  void map // TODO 구현 전 lint 경고 억제
+// default export 유지 — 기존 import 구문 깨짐 방지
+// 실제 마커 렌더링은 MapView에서 kakao.maps.CustomOverlay로 처리
+export default function PlaceMarker({ place, map }: PlaceMarkerProps) {
+  if (!place.latitude || !place.longitude) return null
+  void map
   return null
 }

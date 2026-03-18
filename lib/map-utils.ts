@@ -24,12 +24,23 @@ export interface LatLng {
   lng: number
 }
 
+// 유효 좌표 범위 — 한국 + 일본(오사카 등) 여행지 포함 범위
+// 일본 오사카: 위도 34.x, 경도 135.x → 최댓값을 넉넉히 잡아 일본 포함
+const KR_LAT_MIN = 33
+const KR_LAT_MAX = 43
+const KR_LNG_MIN = 124
+const KR_LNG_MAX = 148
+
 // Place 객체에서 위경도 좌표를 추출합니다.
-// latitude/longitude가 없는 장소는 null을 반환 (지도 마커 표시 제외)
+// latitude/longitude가 없거나 유효 범위 밖이면 null 반환 (지도 마커 표시 제외)
 export function placeToLatLng(place: Place): LatLng | null {
-  // TODO: 좌표 유효성 검증 추가 (범위: 위도 33~38, 경도 124~132 대한민국 기준)
-  if (place.latitude === undefined || place.longitude === undefined) {
-    return null
-  }
-  return { lat: place.latitude, lng: place.longitude }
+  if (place.latitude === undefined || place.longitude === undefined) return null
+
+  const { latitude: lat, longitude: lng } = place
+
+  // 유효 범위 검증 — 범위 밖 좌표는 Notion 데이터 오류로 간주하여 제외
+  if (lat < KR_LAT_MIN || lat > KR_LAT_MAX) return null
+  if (lng < KR_LNG_MIN || lng > KR_LNG_MAX) return null
+
+  return { lat, lng }
 }
