@@ -5,7 +5,7 @@
 
 import { useState, useMemo } from "react"
 import Link from "next/link"
-import { Map, RefreshCw } from "lucide-react"
+import { Map } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { ROUTES, CATEGORY_LIST } from "@/lib/constants"
@@ -15,6 +15,7 @@ import TripSummary from "@/components/travel/TripSummary"
 import CategoryTabs from "@/components/travel/CategoryTabs"
 import DateFilter from "@/components/travel/DateFilter"
 import PlaceCard from "@/components/travel/PlaceCard"
+import { RefreshButton } from "@/components/travel/RefreshButton"
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -110,23 +111,8 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
         {/* 여행 제목, 기간, 상태 요약 */}
         <TripSummary trip={trip} />
 
-        {/*
-         * 새로고침 버튼 — 현재는 UI만 구현
-         * Phase 3에서 ISR on-demand revalidation 연결 예정
-         */}
-        <button
-          type="button"
-          aria-label="데이터 새로고침"
-          className={cn(
-            "flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5",
-            "text-sm text-muted-foreground transition-colors",
-            "hover:bg-muted hover:text-foreground",
-          )}
-        >
-          {/* lucide-react RefreshCw 아이콘 */}
-          <RefreshCw className="h-4 w-4" />
-          <span className="hidden sm:inline">새로고침</span>
-        </button>
+        {/* RefreshButton — ISR on-demand revalidation + router.refresh() */}
+        <RefreshButton tripId={trip.id} />
       </div>
 
       {/* ── 필터 영역: 카테고리 탭 + 날짜 필터 가로 배치 ───────────────── */}

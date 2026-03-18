@@ -1,20 +1,30 @@
 // On-demand ISR Revalidation API 핸들러
-// Notion Webhook 등 외부 트리거가 이 엔드포인트를 호출하면
-// 해당 경로의 캐시를 즉시 무효화 (revalidatePath/revalidateTag)
+// 새로고침 버튼 클릭 시 이 엔드포인트를 호출하여 캐시를 즉시 무효화
+import { revalidatePath } from "next/cache"
 import { NextRequest } from "next/server"
 
 // POST /api/revalidate
-// Body: { secret: string, path?: string }
+// Body: { tripId: string }
 export async function POST(request: NextRequest) {
-  // TODO: 요청 본문에서 secret 추출 후 환경변수(REVALIDATE_SECRET)와 비교
-  // const body = await request.json()
-  // if (body.secret !== process.env.REVALIDATE_SECRET) {
-  //   return Response.json({ error: "Invalid secret" }, { status: 401 })
-  // }
+  try {
+    const body = await request.json()
+    const { tripId } = body
 
-  // TODO: revalidatePath("/travel") 또는 revalidateTag("trips") 호출
-  // import { revalidatePath } from "next/cache"
-  // revalidatePath("/travel")
+    // 여행 목록 페이지 캐시 무효화
+    revalidatePath("/travel")
 
-  return Response.json({ revalidated: false, message: "TODO: 구현 예정" })
+    // 특정 여행 대시보드 페이지 캐시 무효화
+    if (tripId) {
+      revalidatePath(`/travel/${tripId}`)
+      revalidatePath(`/travel/${tripId}/map`)
+    }
+
+    return Response.json({ revalidated: true })
+  } catch {
+    // 요청 파싱 실패 등 예외 처리
+    return Response.json(
+      { revalidated: false, error: "재검증 실패" },
+      { status: 500 }
+    )
+  }
 }
