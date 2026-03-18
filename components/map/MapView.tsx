@@ -28,15 +28,18 @@ export default function MapView({ places }: MapViewProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const activeOverlayRef = useRef<any>(null)
 
-  // isScriptLoaded: 카카오 SDK 스크립트 로드 완료 여부
-  // Script onLoad → useEffect → initMap 순서로 초기화를 보장
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false)
+  // isReady: 카카오 SDK 사용 가능 여부 (스크립트 로드 + window.kakao 존재 모두 확인)
+  const [isReady, setIsReady] = useState(false)
 
   // initMap — 카카오 지도 초기화 및 마커 생성
   // useCallback: places 변경 시에만 함수 재생성 (useEffect 의존성 배열 안정화)
   const initMap = useCallback(() => {
     // 컨테이너가 없거나 이미 초기화된 경우 중복 실행 방지
     if (!mapContainerRef.current || mapRef.current) return
+
+    // window.kakao 존재 여부 방어 체크
+    // SPA 내비게이션 시 스크립트가 캐시되어 onLoad가 발화하지 않을 수 있음
+    if (!window.kakao) return
 
     // kakao.maps.load() 콜백 — SDK 내부 모듈 로드 완료 후 실행 보장
     // autoload=false 옵션과 쌍으로 사용 필수
@@ -134,13 +137,26 @@ export default function MapView({ places }: MapViewProps) {
     })
   }, [places])
 
-  // 스크립트 로드 완료 후 지도 초기화
-  // isScriptLoaded가 true가 된 이후에만 window.kakao에 접근 가능
+  // 컴포넌트 마운트 시 window.kakao가 이미 로드된 경우 처리
+  // SPA 내비게이션: 스크립트가 캐시되어 onLoad가 다시 발화하지 않으므로
+  // 마운트 시점에 window.kakao 존재 여부를 직접 확인
   useEffect(() => {
-    if (isScriptLoaded) {
+    if (typeof window !== "undefined" && window.kakao) {
+      setIsReady(true)
+    }
+  }, [])
+
+  // isReady가 true가 된 이후 지도 초기화
+  useEffect(() => {
+    if (isReady) {
       initMap()
     }
-  }, [isScriptLoaded, initMap])
+  }, [isReady, initMap])
+
+  // Script onLoad 핸들러 — 최초 페이지 로드 시 스크립트 다운로드 완료 후 호출
+  const handleScriptLoad = useCallback(() => {
+    setIsReady(true)
+  }, [])
 
   return (
     <div className="relative h-full w-full">
@@ -150,7 +166,7 @@ export default function MapView({ places }: MapViewProps) {
       <Script
         src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&autoload=false`}
         strategy="afterInteractive"
-        onLoad={() => setIsScriptLoaded(true)}
+        onLoad={handleScriptLoad}
       />
       {/* 지도 컨테이너 — h-full로 부모 높이를 그대로 사용
           부모 컴포넌트에서 반드시 고정 높이를 지정해야 지도가 렌더링됨 */}
