@@ -28,11 +28,152 @@ export default function MapView({ places }: MapViewProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const activeOverlayRef = useRef<any>(null)
 
+  // overlaysRef: 현재 지도에 표시 중인 마커 오버레이 목록
+  // places 변경 시 기존 마커를 일괄 제거하기 위해 ref로 추적
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const overlaysRef = useRef<any[]>([])
+
   // isReady: 카카오 SDK 사용 가능 여부 (스크립트 로드 + window.kakao 존재 모두 확인)
   const [isReady, setIsReady] = useState(false)
 
-  // initMap — 카카오 지도 초기화 및 마커 생성
-  // useCallback: places 변경 시에만 함수 재생성 (useEffect 의존성 배열 안정화)
+  // isMapInitialized: 지도 인스턴스 생성 완료 여부
+  // kakao.maps.load()는 비동기이므로 mapRef.current 확인만으로는 타이밍 이슈 발생 가능
+  const [isMapInitialized, setIsMapInitialized] = useState(false)
+
+  // clearMarkers — overlaysRef에 저장된 모든 마커 오버레이를 지도에서 제거
+  const clearMarkers = useCallback(() => {
+    overlaysRef.current.forEach((overlay) => overlay.setMap(null))
+    overlaysRef.current = []
+    // 열린 팝업도 함께 닫기
+    if (activeOverlayRef.current) {
+      activeOverlayRef.current.setMap(null)
+      activeOverlayRef.current = null
+    }
+  }, [])
+
+  // bindPopupCloseEvent — 팝업 닫기 버튼에 이벤트 바인딩
+  // popupOverlay: 닫을 대상 CustomOverlay
+  const bindPopupCloseEvent = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (popupOverlay: any) => {
+      setTimeout(() => {
+        const closeBtn = document.querySelector("[data-popup-close]")
+        if (!closeBtn) return
+        closeBtn.addEventListener("click", () => {
+          popupOverlay.setMap(null)
+          activeOverlayRef.current = null
+        })
+      }, 0)
+    },
+    []
+  )
+
+  // bindMarkerClickEvent — 마커 클릭 시 팝업 오버레이 표시
+  // place: 클릭한 장소 정보, position: 마커 좌표
+  const bindMarkerClickEvent = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (place: Place, position: any) => {
+      setTimeout(() => {
+        const el = document.querySelector(`[data-place-id="${place.id}"]`)
+        if (!el) return
+
+        el.addEventListener("click", () => {
+          // 이미 열린 팝업이 있으면 닫기 (한 번에 하나의 팝업만 표시)
+          if (activeOverlayRef.current) {
+            activeOverlayRef.current.setMap(null)
+            activeOverlayRef.current = null
+          }
+
+          // 팝업 CustomOverlay 생성 — MarkerPopup.createPopupHTML로 HTML 생성
+          const popupContent = createPopupHTML(place)
+          const popupOverlay = new window.kakao.maps.CustomOverlay({
+            position,
+            content: popupContent,
+            yAnchor: 1.4, // 마커 위쪽에 팝업 표시 (1.0이면 마커 아래)
+            xAnchor: 0.5,
+            zIndex: 10,
+          })
+          popupOverlay.setMap(mapRef.current)
+          activeOverlayRef.current = popupOverlay
+          bindPopupCloseEvent(popupOverlay)
+        })
+      }, 0)
+    },
+    [bindPopupCloseEvent]
+  )
+
+  // createMarkerOverlay — 단일 장소의 마커 오버레이 생성 후 지도에 표시
+  // 생성된 오버레이를 overlaysRef에 추가하여 이후 일괄 제거 가능하게 관리
+  const createMarkerOverlay = useCallback(
+    (place: Place) => {
+      const latlng = placeToLatLng(place)
+      // 좌표가 없거나 유효 범위 밖인 장소는 마커 생성 생략
+      if (!latlng) return null
+
+      const position = new window.kakao.maps.LatLng(latlng.lat, latlng.lng)
+
+      // 카테고리 컬러 원형 마커 — kakao.maps.CustomOverlay로 HTML 직접 삽입
+      // 기본 Marker 대신 CustomOverlay를 사용하는 이유:
+      //   기본 Marker는 이미지 기반이라 카테고리별 색상 적용이 번거로움
+      const markerColor = MARKER_COLORS[place.category]
+      const markerContent = `
+        <div style="
+          width:28px; height:28px; border-radius:50%;
+          background:${markerColor}; border:2px solid #fff;
+          box-shadow:0 2px 6px rgba(0,0,0,0.3);
+          cursor:pointer; display:flex; align-items:center; justify-content:center;
+        " data-place-id="${place.id}">
+          <div style="width:8px;height:8px;border-radius:50%;background:#fff;"></div>
+        </div>
+      `
+
+      const markerOverlay = new window.kakao.maps.CustomOverlay({
+        position,
+        content: markerContent,
+        yAnchor: 0.5,
+        xAnchor: 0.5,
+        zIndex: 1,
+      })
+      markerOverlay.setMap(mapRef.current)
+      overlaysRef.current.push(markerOverlay)
+
+      // CustomOverlay는 kakao 이벤트 시스템 미지원 → DOM 이벤트 직접 바인딩
+      bindMarkerClickEvent(place, position)
+
+      return position
+    },
+    [bindMarkerClickEvent]
+  )
+
+  // renderMarkers — 기존 마커 전체 제거 후 places 목록으로 새 마커 일괄 생성
+  // places prop 변경 시(날짜 필터 등) 호출됨
+  const renderMarkers = useCallback(
+    (targetPlaces: Place[]) => {
+      if (!mapRef.current) return
+
+      clearMarkers()
+
+      // 모든 마커 좌표를 포함하는 bounds — fitBounds로 자동 줌/중심 조정에 사용
+      const bounds = new window.kakao.maps.LatLngBounds()
+      let hasMarkers = false
+
+      targetPlaces.forEach((place) => {
+        const position = createMarkerOverlay(place)
+        if (!position) return
+        hasMarkers = true
+        bounds.extend(position)
+      })
+
+      // 마커가 하나 이상 있으면 모든 마커가 화면에 들어오도록 자동 조정
+      if (hasMarkers) {
+        mapRef.current.setBounds(bounds)
+      }
+    },
+    [clearMarkers, createMarkerOverlay]
+  )
+
+  // initMap — 카카오 지도 인스턴스 초기화 (최초 1회만 실행)
+  // 마커 생성은 renderMarkers에서 별도 처리하여 지도 재생성 없이 마커만 갱신 가능
   const initMap = useCallback(() => {
     // 컨테이너가 없거나 이미 초기화된 경우 중복 실행 방지
     if (!mapContainerRef.current || mapRef.current) return
@@ -53,105 +194,34 @@ export default function MapView({ places }: MapViewProps) {
       const map = new window.kakao.maps.Map(mapContainerRef.current, options)
       mapRef.current = map
 
-      // 모든 마커 좌표를 포함하는 bounds — fitBounds로 자동 줌/중심 조정에 사용
-      const bounds = new window.kakao.maps.LatLngBounds()
-      let hasMarkers = false
-
-      places.forEach((place) => {
-        const latlng = placeToLatLng(place)
-        // 좌표가 없거나 유효 범위 밖인 장소는 마커 생성 생략
-        if (!latlng) return
-
-        hasMarkers = true
-        const position = new window.kakao.maps.LatLng(latlng.lat, latlng.lng)
-        bounds.extend(position)
-
-        // 카테고리 컬러 원형 마커 — kakao.maps.CustomOverlay로 HTML 직접 삽입
-        // 기본 Marker 대신 CustomOverlay를 사용하는 이유:
-        //   기본 Marker는 이미지 기반이라 카테고리별 색상 적용이 번거로움
-        const markerColor = MARKER_COLORS[place.category]
-        const markerContent = `
-          <div style="
-            width:28px; height:28px; border-radius:50%;
-            background:${markerColor}; border:2px solid #fff;
-            box-shadow:0 2px 6px rgba(0,0,0,0.3);
-            cursor:pointer; display:flex; align-items:center; justify-content:center;
-          " data-place-id="${place.id}">
-            <div style="width:8px;height:8px;border-radius:50%;background:#fff;"></div>
-          </div>
-        `
-
-        const markerOverlay = new window.kakao.maps.CustomOverlay({
-          position,
-          content: markerContent,
-          yAnchor: 0.5,
-          xAnchor: 0.5,
-          zIndex: 1,
-        })
-        markerOverlay.setMap(map)
-
-        // 마커 클릭 이벤트 — CustomOverlay는 kakao 이벤트 시스템 미지원
-        // setMap() 후 content가 DOM에 삽입되므로 setTimeout으로 다음 틱에 바인딩
-        setTimeout(() => {
-          const el = document.querySelector(`[data-place-id="${place.id}"]`)
-          if (!el) return
-
-          el.addEventListener("click", () => {
-            // 이미 열린 팝업이 있으면 닫기 (한 번에 하나의 팝업만 표시)
-            if (activeOverlayRef.current) {
-              activeOverlayRef.current.setMap(null)
-              activeOverlayRef.current = null
-            }
-
-            // 팝업 CustomOverlay 생성 — MarkerPopup.createPopupHTML로 HTML 생성
-            const popupContent = createPopupHTML(place)
-            const popupOverlay = new window.kakao.maps.CustomOverlay({
-              position,
-              content: popupContent,
-              yAnchor: 1.4, // 마커 위쪽에 팝업 표시 (1.0이면 마커 아래)
-              xAnchor: 0.5,
-              zIndex: 10,
-            })
-            popupOverlay.setMap(map)
-            activeOverlayRef.current = popupOverlay
-
-            // 팝업 닫기 버튼 이벤트 — data-popup-close 속성으로 닫기 버튼 감지
-            // 팝업 DOM도 setTimeout으로 다음 틱에 바인딩
-            setTimeout(() => {
-              const closeBtn = document.querySelector("[data-popup-close]")
-              if (closeBtn) {
-                closeBtn.addEventListener("click", () => {
-                  popupOverlay.setMap(null)
-                  activeOverlayRef.current = null
-                })
-              }
-            }, 0)
-          })
-        }, 0)
-      })
-
-      // 마커가 하나 이상 있으면 모든 마커가 화면에 들어오도록 자동 조정
-      if (hasMarkers) {
-        map.setBounds(bounds)
-      }
+      // 지도 인스턴스 준비 완료 → renderMarkers 실행 트리거
+      setIsMapInitialized(true)
     })
-  }, [places])
+  }, [])
 
   // 컴포넌트 마운트 시 window.kakao가 이미 로드된 경우 처리
   // SPA 내비게이션: 스크립트가 캐시되어 onLoad가 다시 발화하지 않으므로
   // 마운트 시점에 window.kakao 존재 여부를 직접 확인
   useEffect(() => {
     if (typeof window !== "undefined" && window.kakao) {
-      setIsReady(true)
+      setIsReady(true) // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [])
 
-  // isReady가 true가 된 이후 지도 초기화
+  // isReady가 true가 된 이후 지도 초기화 (최초 1회)
   useEffect(() => {
     if (isReady) {
       initMap()
     }
   }, [isReady, initMap])
+
+  // isMapInitialized 또는 places 변경 시 마커 재렌더링
+  // 의존성 배열에 places를 포함 → 날짜 필터 변경 시 자동으로 마커 갱신
+  useEffect(() => {
+    if (isMapInitialized) {
+      renderMarkers(places)
+    }
+  }, [isMapInitialized, places, renderMarkers])
 
   // Script onLoad 핸들러 — 최초 페이지 로드 시 스크립트 다운로드 완료 후 호출
   const handleScriptLoad = useCallback(() => {

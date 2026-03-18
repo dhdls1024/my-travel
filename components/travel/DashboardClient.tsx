@@ -75,9 +75,10 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
   }, [places])
 
   // ── 필터링된 장소 목록 ─────────────────────────────────────────────────────
-  // 카테고리 필터 → 날짜 필터 순서로 적용
+  // checked 필터 → 카테고리 필터 → 날짜 필터 순서로 적용
   const filteredPlaces = useMemo(() => {
-    let result = places
+    // 0. checked 필터 — checked === true 인 장소만 표시
+    let result = places.filter((p) => p.checked)
 
     // 1. 카테고리 필터 (null 이면 전체 통과)
     if (selectedCategory !== null) {
@@ -146,6 +147,19 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
           />
         )}
       </div>
+
+      {/* ── 비용 합계 — 현재 필터 기준으로 cost 합산, cost 있는 장소가 1개 이상일 때만 표시 */}
+      {filteredPlaces.some((p) => p.cost !== undefined) && (
+        <div className="mb-4 flex items-center justify-end gap-1.5 text-sm text-muted-foreground">
+          <span>예상 합계</span>
+          <span className="font-semibold text-foreground">
+            {filteredPlaces
+              .reduce((sum, p) => sum + (p.cost ?? 0), 0)
+              .toLocaleString()}
+            원
+          </span>
+        </div>
+      )}
 
       {/* ── 메인 콘텐츠: 2열 레이아웃 (데스크톱) / 단일 열 (모바일) ─────── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

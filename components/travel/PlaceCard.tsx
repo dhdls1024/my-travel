@@ -69,6 +69,13 @@ export default function PlaceCard({ place }: PlaceCardProps) {
               {place.memo}
             </p>
           )}
+
+          {/* 예상비용 — cost가 있을 때만 표시, 천단위 콤마 포맷 */}
+          {place.cost !== undefined && (
+            <p className="text-muted-foreground text-xs">
+              예상비용: {place.cost.toLocaleString()}원
+            </p>
+          )}
         </div>
 
         {/* 외부 링크 버튼 — url이 있을 때만 표시 */}

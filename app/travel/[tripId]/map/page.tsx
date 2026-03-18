@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react"
 import { notFound } from "next/navigation"
 
 import { ROUTES, SITE_CONFIG } from "@/lib/constants"
-import { getTripById, getPlacesByTripId } from "@/lib/dummy-data"
+import { getTrips, getPlaces } from "@/lib/notion"
 import MapViewWrapper from "@/components/map/MapViewWrapper"
 
 // Next.js 15: params는 Promise로 래핑되어 전달됨 (await 필수)
@@ -18,7 +18,9 @@ export async function generateMetadata({
   params: Params
 }): Promise<Metadata> {
   const { tripId } = await params
-  const trip = getTripById(tripId)
+  // getTrips: Notion DB에서 전체 여행 목록을 조회한 뒤 tripId로 매칭
+  const trips = await getTrips()
+  const trip = trips.find((t) => t.id === tripId)
   return {
     title: trip
       ? `${trip.title} 지도 | ${SITE_CONFIG.name}`
@@ -35,13 +37,16 @@ export const revalidate = 60
 export default async function TravelMapPage({ params }: { params: Params }) {
   const { tripId } = await params
 
-  const trip = getTripById(tripId)
+  // getTrips: Notion DB에서 전체 여행 목록을 조회한 뒤 tripId로 매칭
+  const trips = await getTrips()
+  const trip = trips.find((t) => t.id === tripId)
   // 존재하지 않는 여행 ID 접근 시 404 처리
   if (!trip) notFound()
 
-  const places = getPlacesByTripId(tripId)
-  // 위경도 좌표가 모두 있는 장소만 지도 마커로 표시
-  const placesWithCoords = places.filter((p) => p.latitude && p.longitude)
+  // getPlaces: 특정 tripId에 속한 장소 목록을 Notion DB에서 조회
+  const places = await getPlaces(tripId)
+  // checked === true 이고 위경도 좌표가 모두 있는 장소만 지도 마커로 표시
+  const placesWithCoords = places.filter((p) => p.checked && p.latitude && p.longitude)
 
   return (
     // overflow-hidden: 헤더(56px) + 지도가 100vh를 정확히 채우도록 스크롤 차단
