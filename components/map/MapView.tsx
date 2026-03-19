@@ -10,15 +10,25 @@ import { placeToLatLng } from "@/lib/map-utils"
 import { MARKER_COLORS } from "@/lib/constants"
 import { createPopupHTML } from "@/components/map/MarkerPopup"
 import TourBusRoute from "@/components/map/TourBusRoute"
+import CurrentLocationMarker from "@/components/map/CurrentLocationMarker"
 
 interface MapViewProps {
   // 지도에 표시할 장소 목록 (latitude/longitude가 있는 장소만 마커로 표시)
   places: Place[]
   // 투어버스 정류장 목록 — 빈 배열이면 노선 오버레이 미표시
   busStops?: BusStop[]
+  // GPS 현재 위치 마커 표시 여부 (기본 false)
+  showCurrentLocation?: boolean
+  // 현재 위치 좌표 — Geolocation API에서 수신한 값
+  currentPosition?: { lat: number; lng: number } | null
 }
 
-export default function MapView({ places, busStops = [] }: MapViewProps) {
+export default function MapView({
+  places,
+  busStops = [],
+  showCurrentLocation = false,
+  currentPosition = null,
+}: MapViewProps) {
   // mapContainerRef: 카카오 지도 SDK가 DOM을 직접 제어하므로 ref로 관리
   const mapContainerRef = useRef<HTMLDivElement>(null)
 
@@ -249,6 +259,11 @@ export default function MapView({ places, busStops = [] }: MapViewProps) {
           busStops가 있을 때만 마운트하여 불필요한 카카오 API 호출 방지 */}
       {isMapInitialized && busStops.length > 0 && (
         <TourBusRoute map={mapRef.current} busStops={busStops} />
+      )}
+
+      {/* GPS 현재 위치 마커 — 위치 권한 허용 + 좌표 수신 + 토글 on 상태일 때만 표시 */}
+      {isMapInitialized && showCurrentLocation && currentPosition && (
+        <CurrentLocationMarker map={mapRef.current} position={currentPosition} />
       )}
     </div>
   )

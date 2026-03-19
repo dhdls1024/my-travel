@@ -6,6 +6,7 @@
 import { useState, useMemo } from "react"
 import dynamic from "next/dynamic"
 
+import { useGeolocation } from "@/lib/use-geolocation"
 import type { Place, BusStop } from "@/types/travel"
 import { cn } from "@/lib/utils"
 import {
@@ -103,6 +104,12 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
   // showTourBus: 투어버스 노선 표시 여부 — 기본값 true (처음부터 노선 표시)
   const [showTourBus, setShowTourBus] = useState(true)
 
+  // showCurrentLocation: GPS 현재 위치 마커 표시 토글 — 기본값 false (명시적 활성화 요구)
+  const [showCurrentLocation, setShowCurrentLocation] = useState(false)
+
+  // useGeolocation: GPS 위치 조회 훅 — 권한 거부 시 permissionDenied: true
+  const { position, permissionDenied } = useGeolocation()
+
   // uniqueDates: places에서 추출한 고유 날짜 목록
   // places가 변경될 때만 재계산 (useMemo로 최적화)
   const uniqueDates = useMemo(() => extractUniqueDates(places), [places])
@@ -159,6 +166,22 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
             🚌 투어버스 노선
           </button>
         )}
+
+        {/* GPS 현재 위치 토글 버튼 — 항상 표시 (busStops 유무 무관) */}
+        {/* permissionDenied: 위치 권한 거부 시 disabled (에러 토스트 없이 조용히 처리) */}
+        <button
+          onClick={() => setShowCurrentLocation((v) => !v)}
+          disabled={permissionDenied}
+          className={cn(
+            "rounded-md px-3 py-1.5 text-xs font-medium shadow-md transition-colors",
+            showCurrentLocation && !permissionDenied
+              ? "bg-blue-500 text-white"
+              : "border border-gray-200 bg-white text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white",
+            permissionDenied && "cursor-not-allowed opacity-50"
+          )}
+        >
+          {permissionDenied ? "📍 위치 권한 필요" : "📍 내 위치"}
+        </button>
       </div>
 
       {/* MapView에 필터링된 places와 busStops 전달
@@ -166,6 +189,8 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
       <MapViewDynamic
         places={filteredPlaces}
         busStops={showTourBus ? busStops : []}
+        showCurrentLocation={showCurrentLocation && !permissionDenied}
+        currentPosition={position}
       />
     </div>
   )
