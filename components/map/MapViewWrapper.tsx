@@ -186,19 +186,23 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
         >
           {permissionDenied ? "📍 위치 권한 필요" : "📍 내 위치"}
         </button>
+
+        {/* 현재 위치로 이동 버튼 — 위치 수신 완료 시에만 노출
+            우상단 컨트롤 영역에 배치하여 PC/모바일 모두 지도 영역 안에 표시 */}
+        {position && !permissionDenied && (
+          <button
+            onClick={() => setPanToPosition({ ...position })}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md transition-colors hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            aria-label="현재 위치로 이동"
+            title="현재 위치로 이동"
+          >
+            🎯
+          </button>
+        )}
       </div>
 
-      {/* 좌하단 현재 위치 이동 버튼 — 위치 권한이 있고 좌표가 있을 때만 표시
-          카카오 기본 지도 컨트롤(우하단)과 겹치지 않도록 left-3 bottom-8 배치 */}
-      {position && !permissionDenied && (
-        <button
-          onClick={() => setPanToPosition({ ...position })}
-          className="absolute bottom-8 left-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition-colors hover:bg-gray-50 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          aria-label="현재 위치로 이동"
-        >
-          🎯
-        </button>
-      )}
+      {/* 현재 위치로 이동 버튼 — 우상단 컨트롤 영역 하단에 배치
+          position이 있을 때만 표시 (권한 허용 + 좌표 수신 완료) */}
 
       {/* MapView에 필터링된 places와 busStops 전달
           showTourBus가 false이면 빈 배열 전달 → TourBusRoute 미표시 */}
