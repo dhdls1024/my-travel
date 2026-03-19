@@ -65,9 +65,35 @@
 - 비용 집계 및 시각화 (카테고리/날짜별 예상 비용 합산)
 - 일정 타임라인 뷰 (간트 차트 형태)
 - Geocoding 자동화 (주소 → 위도/경도 자동 변환)
-- 현재 위치 표시 (모바일 GPS)
-- PWA 오프라인 지원
 - 공유 기능 (공개 URL)
+
+### 4. Phase 5 확장 기능
+
+| ID | 기능명 | 설명 | 확장 이유 | 관련 페이지 |
+|----|--------|------|----------|------------|
+| **F020** | GPS 현재 위치 표시 | `navigator.geolocation.getCurrentPosition()` Web API로 사용자 실시간 위치를 지도에 파란 원형 펄싱 마커로 표시, 최초 1회 + "위치 갱신" 버튼으로 업데이트 | 현장에서 가장 가까운 다음 목적지 파악에 직접적으로 유용 — MVP 완료 후 여행 현장 편의성 향상 목적 | 지도 페이지 |
+| **F021** | PWA (Progressive Web App) | `next-pwa` 또는 Next.js 15+ 내장 PWA 지원으로 홈 화면 앱 추가, Cache-first 정적 자산 + Network-first Notion 데이터 캐싱, 오프라인 폴백 배너 표시 | 지하·외곽 등 네트워크 불안정 여행지에서 마지막 로딩된 여행 계획 확인 가능 — 오프라인 신뢰성 확보 | 전체 페이지 |
+
+#### F020: GPS 현재 위치 표시 상세
+
+| 항목 | 내용 |
+|------|------|
+| **API** | `navigator.geolocation.getCurrentPosition()` — 브라우저 내장 Web API, 추가 패키지 없음 |
+| **마커 스타일** | 기존 장소 마커(카테고리별 색상 CustomOverlay)와 구분되는 파란 원형 펄싱 마커 — Tailwind `animate-ping` 클래스 활용 (`@keyframes` 인라인 style 방식 불가, CustomOverlay content에 Tailwind 클래스 주입으로 대체) |
+| **업데이트 방식** | 최초 페이지 진입 시 1회 위치 조회 + 지도 우하단 "위치 갱신" 버튼으로 수동 재조회 |
+| **권한 거부 처리** | 최초 진입 시 조용히 무시. 버튼 클릭 시 권한 거부는 버튼 상태(disabled, 아이콘 변경)로 피드백 — 에러 토스트 없음, 여행 장소 마커 정상 표시 유지 |
+| **구현 위치** | `lib/use-geolocation.ts` 커스텀 훅 (Geolocation 상태 관리) + `components/map/CurrentLocationMarker.tsx` (마커 렌더링) — 30줄 규칙에 따라 훅/컴포넌트 분리 |
+
+#### F021: PWA 상세
+
+| 항목 | 내용 |
+|------|------|
+| **구현 방식** | Next.js 내장 PWA 지원 (`app/manifest.ts` + `public/sw.js` 수동 작성) — `next-pwa` 패키지는 Turbopack과 비호환으로 사용 불가 |
+| **manifest** | `app/manifest.ts` 파일로 생성 (Next.js 16 내장 방식): `name`, `short_name`, `icons` (192x192, 512x512), `theme_color`, `display: "standalone"` |
+| **Service Worker 캐싱 전략** | 정적 자산(JS/CSS/이미지): Cache-first / 페이지 HTML: Network-first (ISR 갱신 반영) / `/api/*` 경로: NetworkOnly (On-demand ISR 새로고침 버튼 정상 동작 보장) |
+| **오프라인 폴백** | 여행 목록·대시보드 페이지: 캐시된 HTML 표시 + "오프라인 상태입니다" 배너. 지도 페이지: 카카오 API 타일 캐싱 불가(이용 약관)이므로 "지도를 불러올 수 없습니다 (인터넷 연결 확인)" 메시지 표시 |
+| **iOS Safari 지원** | `<meta name="apple-mobile-web-app-capable" content="yes">` + `apple-touch-icon` 메타태그 (`app/layout.tsx` 추가) |
+| **구현 위치** | `app/manifest.ts` (Manifest), `public/sw.js` (Service Worker), `public/icons/` (아이콘), `app/layout.tsx` (메타태그), `app/offline/page.tsx` (오프라인 폴백 페이지) |
 
 ---
 
