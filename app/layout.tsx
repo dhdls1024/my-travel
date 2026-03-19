@@ -10,6 +10,10 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 // QueryProvider: TanStack Query 캐시 컨텍스트 (클라이언트 컴포넌트)
 import { QueryProvider } from "@/providers/query-provider"
+// SpeedInsights: Vercel 성능 모니터링 — Core Web Vitals(LCP, FID, CLS) 수집
+import { SpeedInsights } from "@vercel/speed-insights/next"
+// Analytics: Vercel 방문자 분석 — 페이지뷰, 이탈률, 방문 경로 추적
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { SITE_CONFIG } from "@/lib/constants"
 
@@ -53,6 +57,9 @@ export default function RootLayout({
             <Footer />
             {/* richColors: 알림 유형별 색상 자동 적용 */}
             <Toaster richColors />
+            {/* Vercel 모니터링 — 프로덕션에서만 활성화됨 (로컬 개발 환경에서는 무동작) */}
+            <SpeedInsights />
+            <Analytics />
           </QueryProvider>
         </ThemeProvider>
       </body>
