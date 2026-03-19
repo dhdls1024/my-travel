@@ -14,6 +14,8 @@ import { QueryProvider } from "@/providers/query-provider"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 // Analytics: Vercel 방문자 분석 — 페이지뷰, 이탈률, 방문 경로 추적
 import { Analytics } from "@vercel/analytics/next"
+// ServiceWorkerRegister: PWA 오프라인 지원을 위한 Service Worker 등록 컴포넌트
+import { ServiceWorkerRegister } from "@/providers/service-worker-register"
 import "./globals.css"
 import { SITE_CONFIG } from "@/lib/constants"
 
@@ -30,6 +32,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: SITE_CONFIG.name,
   description: SITE_CONFIG.description,
+  // PWA Apple 메타태그: iOS 홈 화면 추가 시 네이티브 앱처럼 동작하도록 설정
+  appleWebApp: {
+    capable: true,               // apple-mobile-web-app-capable: 전체화면 모드 활성화
+    statusBarStyle: "default",   // 상태바 스타일: 기본(흰 배경)
+    title: "여행 플래너",         // 홈 화면 아이콘 아래 표시될 앱 이름
+  },
+  // icons: Apple touch icon 경로 (192px 이상 권장)
+  icons: {
+    apple: "/icons/icon-192.png",
+  },
 }
 
 export default function RootLayout({
@@ -60,6 +72,8 @@ export default function RootLayout({
             {/* Vercel 모니터링 — 프로덕션에서만 활성화됨 (로컬 개발 환경에서는 무동작) */}
             <SpeedInsights />
             <Analytics />
+            {/* ServiceWorkerRegister: 앱 로드 후 SW 등록 — DOM 렌더링 없음 */}
+            <ServiceWorkerRegister />
           </QueryProvider>
         </ThemeProvider>
       </body>
