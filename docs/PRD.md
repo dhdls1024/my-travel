@@ -73,6 +73,7 @@
 |----|--------|------|----------|------------|
 | **F020** | GPS 현재 위치 표시 | `navigator.geolocation.getCurrentPosition()` Web API로 사용자 실시간 위치를 지도에 파란 원형 펄싱 마커로 표시, 최초 1회 + "위치 갱신" 버튼으로 업데이트 | 현장에서 가장 가까운 다음 목적지 파악에 직접적으로 유용 — MVP 완료 후 여행 현장 편의성 향상 목적 | 지도 페이지 |
 | **F021** | PWA (Progressive Web App) | `next-pwa` 또는 Next.js 15+ 내장 PWA 지원으로 홈 화면 앱 추가, Cache-first 정적 자산 + Network-first Notion 데이터 캐싱, 오프라인 폴백 배너 표시 | 지하·외곽 등 네트워크 불안정 여행지에서 마지막 로딩된 여행 계획 확인 가능 — 오프라인 신뢰성 확보 | 전체 페이지 |
+| **F022** | 실시간 장소 추가 | 여행 대시보드에서 모달 폼으로 새 장소(Place)를 입력해 Notion Places DB에 즉시 저장, 저장 성공 후 대시보드 카드 목록 즉시 갱신 | Notion 앱 없이 현장에서 바로 방문 장소를 등록할 수 있어 여행 중 실시간 플래닝 가능 — 여행 대시보드의 쓰기 기능 확장 | 여행 대시보드 페이지 |
 
 #### F020: GPS 현재 위치 표시 상세
 
@@ -94,6 +95,55 @@
 | **오프라인 폴백** | 여행 목록·대시보드 페이지: 캐시된 HTML 표시 + "오프라인 상태입니다" 배너. 지도 페이지: 카카오 API 타일 캐싱 불가(이용 약관)이므로 "지도를 불러올 수 없습니다 (인터넷 연결 확인)" 메시지 표시 |
 | **iOS Safari 지원** | `<meta name="apple-mobile-web-app-capable" content="yes">` + `apple-touch-icon` 메타태그 (`app/layout.tsx` 추가) |
 | **구현 위치** | `app/manifest.ts` (Manifest), `public/sw.js` (Service Worker), `public/icons/` (아이콘), `app/layout.tsx` (메타태그), `app/offline/page.tsx` (오프라인 폴백 페이지) |
+
+#### F022: 실시간 장소 추가 상세
+
+| 항목 | 내용 |
+|------|------|
+| **API 엔드포인트** | `POST /api/places` Route Handler 신규 생성 — Request body: `{ tripId, name, category, visitDate, visitDateEnd?, memo?, url?, cost? }` / 성공: 201 + 생성된 Place 객체 반환 / 실패: 400(유효성 오류) 또는 500(Notion API 오류) 응답 |
+| **입력 필드** | 장소명(필수, Name/title) · 카테고리(선택, Category/select, 기본값: 명소) · 방문 날짜(선택, VisitDate/date, 단일 또는 시작~종료) · 메모(선택, Memo/rich_text) · 링크(선택, URL/url) · 예상 비용(선택, Cost/number) |
+| **자동 할당 필드** | trips(relation) — 현재 열람 중인 tripId 자동 주입 / CheckBox(checkbox) — **기본값 true** (방문 예정 상태로 즉시 목록·지도에 표시) |
+| **캐시 갱신 전략** | 저장 성공 후 서버에서 `revalidatePath(`/travel/${tripId}`)` on-demand ISR 무효화 (리터럴 경로 사용 필수 — 패턴 문자열 사용 시 무작동) → 클라이언트에서 `router.refresh()` 호출로 서버 컴포넌트 재렌더 (기존 RefreshButton과 동일 패턴, TanStack Query invalidateQueries 미사용 — 현재 DashboardClient가 서버 props 기반이므로 캐시 대상 없음) |
+| **UI 컴포넌트** | shadcn/ui `Dialog` + React Hook Form + Zod 유효성 검증 — 모바일 한 손 조작 기준 폼 레이아웃, 장소명 미입력 시 저장 버튼 비활성화 (RHF `^7.x` + Zod `^4.x` + `@hookform/resolvers` 모두 기존 프로젝트에 설치됨 — 신규 의존성 없음) |
+| **입력 검증 (Zod 스키마)** | `name: z.string().min(1).max(100)` (Notion title 최대 100자 제한) / `category: z.enum(['교통','숙소','맛집','명소'])` / `visitDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()` / `visitDateEnd`: visitDate 없으면 사용 불가 / `memo: z.string().max(2000).optional()` (Notion rich_text 최대 2000자) / `url: z.string().url().optional()` / `cost: z.number().min(0).optional()` (음수 방지) |
+| **피드백** | 저장 성공: sonner 성공 토스트 ("등록되었습니다") + 모달 자동 닫힘 / Notion API 오류: sonner 에러 토스트 ("장소 등록에 실패했습니다") + 모달 유지 / 좌표 보완 실패(카카오맵 검색 불가 장소명): 저장은 성공하나 지도에 마커 미표시 — 별도 경고 없음 (graceful degradation) |
+| **보안** | Notion API 키는 Route Handler 서버 사이드에서만 사용 (`process.env.NOTION_API_KEY`) — 클라이언트에 키 노출 없음 / Notion Integration의 Places DB **"Insert Content" 쓰기 권한 활성화 필수** (미설정 시 403 오류) |
+| **@notionhq/client 버전** | 실제 설치 버전 `^4.0.2` 기준으로 개발 — `CreatePageParameters` 타입 v4 기준 사용 (PRD 전 버전 표기 `^5.0.0`은 오기였으며 이 항목으로 확정) |
+| **구현 위치** | `app/api/places/route.ts` (POST 핸들러 — Notion `pages.create()` 호출, `revalidatePath` 리터럴 경로) / `components/travel/AddPlaceDialog.tsx` (모달 폼 컴포넌트, POST 성공 후 `router.refresh()`) / `components/travel/DashboardClient.tsx` ("장소 추가" 버튼 추가) |
+
+---
+
+#### F023: 장소 삭제
+
+| 항목 | 내용 |
+|------|------|
+| **기능명** | 대시보드 장소 카드 삭제 |
+| **설명** | 각 장소 카드 오른쪽 하단 휴지통 아이콘 버튼 클릭 시, 해당 Notion 페이지를 archived(삭제) 처리하여 대시보드 목록에서 즉시 제거 |
+| **Route Handler** | `DELETE /api/places/[placeId]` — `notion.pages.update({ archived: true })` 호출 후 `revalidatePath(\`/travel/${tripId}\`)` |
+| **UI** | PlaceCard 오른쪽 하단 `Trash2` 아이콘 버튼 (외부 링크 버튼 아래), hover 시 `text-destructive` 색상 |
+| **삭제 확인** | 별도 confirm 없이 즉시 삭제 (개인용 앱 — 실수 방지보다 빠른 조작 우선) |
+| **성공** | `router.refresh()` + sonner 토스트 "삭제되었습니다" |
+| **실패** | sonner 에러 토스트 "삭제에 실패했습니다" |
+| **로딩** | 삭제 중 버튼 `disabled` + `Loader2` 스피너 |
+| **보안** | Notion Integration "Update Content" 권한 필요 |
+
+---
+
+#### F024: 장소 수정
+
+| 항목 | 내용 |
+|------|------|
+| **기능명** | 대시보드 장소 카드 수정 |
+| **설명** | 각 장소 카드 오른쪽 액션 컬럼 중간에 위치한 연필 아이콘 버튼 클릭 시, 기존 장소 데이터가 미리 채워진 수정 모달을 열어 Notion Places DB 해당 페이지를 `notion.pages.update()` API로 업데이트 |
+| **Route Handler** | `PATCH /api/places/[placeId]` — Request body: `{ tripId, name, category, visitDate?, visitDateEnd?, memo?, url?, cost? }` / 성공: 200 + 수정된 Place 객체 반환 / 실패: 400(유효성 오류) 또는 500(Notion API 오류) 응답. 서버에서 `revalidatePath(\`/travel/${tripId}\`)` on-demand ISR 무효화 처리 |
+| **UI** | PlaceCard 오른쪽 액션 컬럼 중간에 `Pencil` 아이콘 버튼 배치 — 외부링크 버튼(상단) → **수정 버튼(중간)** → 삭제 버튼(하단) 순서. hover 시 `text-primary` 색상. AddPlaceDialog와 동일한 shadcn/ui `Dialog` 레이아웃 재활용 (`EditPlaceDialog.tsx`) |
+| **초기 데이터** | 모달 열림 시 현재 장소 데이터(`name`, `category`, `visitDate`, `visitDateEnd`, `memo`, `url`, `cost`)를 React Hook Form `defaultValues`로 주입해 폼 필드에 미리 표시 |
+| **입력 검증** | F022(장소 추가)와 동일한 Zod 스키마 재사용 — `name: z.string().min(1).max(100)` / `category: z.enum(['교통','숙소','맛집','명소'])` / `visitDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()` / `visitDateEnd`: visitDate 없으면 사용 불가 / `memo: z.string().max(2000).optional()` / `url: z.string().url().optional()` / `cost: z.number().min(0).optional()` |
+| **성공** | `router.refresh()` + sonner 성공 토스트 "수정되었습니다" + 모달 자동 닫힘 |
+| **실패** | sonner 에러 토스트 "수정에 실패했습니다" + 모달 유지 |
+| **로딩** | 저장 중 저장 버튼 `disabled` + `Loader2` 스피너 |
+| **보안** | Notion API 키는 Route Handler 서버 사이드에서만 사용 (`process.env.NOTION_API_KEY`). Notion Integration "Update Content" 권한 필요 |
+| **구현 위치** | `app/api/places/[placeId]/route.ts` (PATCH 핸들러 — `notion.pages.update()` 호출, `revalidatePath` 리터럴 경로) / `components/travel/EditPlaceDialog.tsx` (수정 모달 폼 컴포넌트, AddPlaceDialog 레이아웃 재활용) / `components/travel/PlaceCard.tsx` (연필 아이콘 버튼 추가, 액션 컬럼 중간 위치) |
 
 ---
 
@@ -609,3 +659,4 @@ export const MARKER_COLORS = {
 | 구현 난이도 | 낮음 | 중간 |
 | 카테고리별 색상 팝업 | 제한적 | 적합 |
 | **MVP 권장** | — | **권장** (카테고리 색상 팝업 구현 용이) |
+
