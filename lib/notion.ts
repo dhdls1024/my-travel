@@ -393,7 +393,13 @@ export async function getPlaces(tripId: string): Promise<Place[]> {
     })
   )
 
-  return enriched
+  // visitDate 오름차순 정렬 — 날짜 없는 항목은 맨 뒤로
+  return enriched.sort((a, b) => {
+    if (!a.visitDate && !b.visitDate) return 0
+    if (!a.visitDate) return 1
+    if (!b.visitDate) return -1
+    return a.visitDate.localeCompare(b.visitDate)
+  })
 }
 
 // ─── 투어버스 정류장 파서 ──────────────────────────────────────────────────────

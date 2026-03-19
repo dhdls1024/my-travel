@@ -16,6 +16,7 @@ import CategoryTabs from "@/components/travel/CategoryTabs"
 import DateFilter from "@/components/travel/DateFilter"
 import PlaceCard from "@/components/travel/PlaceCard"
 import { RefreshButton } from "@/components/travel/RefreshButton"
+import { AddPlaceDialog } from "@/components/travel/AddPlaceDialog"
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -111,8 +112,11 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
         {/* 여행 제목, 기간, 상태 요약 */}
         <TripSummary trip={trip} />
 
-        {/* RefreshButton — ISR on-demand revalidation + router.refresh() */}
-        <RefreshButton tripId={trip.id} />
+        {/* 우측 상단: 새로고침 + 장소 추가 버튼 */}
+        <div className="flex shrink-0 items-center gap-2">
+          <RefreshButton tripId={trip.id} />
+          <AddPlaceDialog tripId={trip.id} />
+        </div>
       </div>
 
       {/* ── 필터 영역: 카테고리 탭 + 날짜 필터 가로 배치 ───────────────── */}
@@ -155,7 +159,8 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
             <ul className="space-y-3">
               {filteredPlaces.map((place) => (
                 <li key={place.id}>
-                  <PlaceCard place={place} />
+                  {/* tripId: 삭제 후 revalidatePath 처리에 필요한 여행 ID */}
+                  <PlaceCard place={place} tripId={trip.id} />
                 </li>
               ))}
             </ul>

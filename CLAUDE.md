@@ -35,19 +35,28 @@ app/
 - `components/sections/` — 페이지 섹션 (HeroSection 등)
 - `components/common/` — BackButton, PageHeader, ThemeToggle 등 공통 컴포넌트
 - `components/travel/` — TripCard, TripSummary, CategoryTabs, DateFilter, PlaceCard, DashboardClient 등
-- `components/map/` — MapView, MapViewWrapper, PlaceMarker, MarkerPopup
+- `components/map/` — MapView, MapViewWrapper, PlaceMarker, MarkerPopup, TourBusRoute, CurrentLocationMarker
 
 **lib/ 파일 역할**:
 - `lib/utils.ts` — `cn()` 유틸리티만 포함
 - `lib/constants.ts` — 모든 정적 상수 (`ROUTES`, `MARKER_COLORS`, `CATEGORY_LABELS` 등)
-- `lib/notion.ts` — Notion 클라이언트 + `fetchWithRetry` (지수 백오프 재시도), `getTrips()`, `getPlaces(tripId)`
+- `lib/notion.ts` — Notion 클라이언트 + `fetchWithRetry` (지수 백오프 재시도), `getTrips()`, `getPlaces(tripId)`, `getBusStops(tripId)`
 - `lib/map-utils.ts` — `window.kakao` 타입 선언, `Place` → `kakao.maps.LatLng` 변환 유틸리티
 - `lib/date-utils.ts` — D-Day 계산, UTC ↔ Asia/Seoul 변환 (`parseNotionDate`, `calculateDday`)
 - `lib/dummy-data.ts` — 개발용 더미 데이터 (Trip[], Place[])
+- `lib/kakao-local.ts` — 카카오 로컬 API 프록시: `searchPlaceCoords()` (장소명 → 위경도), `searchAddressCoords()` (주소 → 위경도)
+- `lib/use-geolocation.ts` — `navigator.geolocation` 커스텀 훅 (`position`, `permissionDenied`, `isLoading`, `refresh`)
 
 **타입 파일**:
 - `types/index.ts` — 공용 타입 (NavItem, TechStackItem 등)
-- `types/travel.ts` — `Trip`, `Place`, `PlaceCategory`(`'교통'|'숙소'|'맛집'|'명소'`), `TripStatus`(`'계획중'|'확정'|'완료'`)
+- `types/travel.ts` — `Trip`, `Place`, `PlaceCategory`(`'교통'|'숙소'|'맛집'|'명소'`), `TripStatus`(`'계획중'|'확정'|'완료'`), `BusStop`
+
+**PWA 관련 파일**:
+- `app/manifest.ts` — Next.js 내장 `MetadataRoute.Manifest` 타입 기반 (`/manifest.webmanifest` 자동 서빙)
+- `public/sw.js` — 수동 작성 Service Worker (Turbopack과 next-pwa 비호환)
+  - `/api/` 및 `dapi.kakao.com` → NetworkOnly, 정적 자산 → Cache-first, HTML → Network-first
+- `providers/service-worker-register.tsx` — SW 등록 클라이언트 컴포넌트
+- `app/offline/page.tsx` — 오프라인 폴백 페이지 (네트워크 복구 시 자동 리다이렉트)
 
 ## 핵심 패턴
 
@@ -75,6 +84,9 @@ ROUTES.travel.dashboard(tripId)  // "/travel/[tripId]"
 - Notion DB 실제 컬럼명: `Name`, `StartDate`, `EndDate`, `Status`(status 타입), `CoverImage`, `Category`, `VisitDate`, `Memo`, `URL`, `trips`(Relation)
 - 위경도는 Notion DB에 저장하지 않음 — `getPlaces()`에서 카카오 로컬 API(`lib/kakao-local.ts`)로 장소명 검색해 자동 보완
 - `VisitDate`는 단일 날짜 또는 start~end 범위(`Place.visitDateEnd`)로 입력 가능; Memo가 `"null"` 문자열인 경우 빈값 처리
+- `Place` 타입에 `cost?(number)`, `checked(boolean)` 필드 있음 — `checked=true`인 장소만 지도 마커로 표시
+- 버스 정류장은 별도 Notion DB (`NOTION_BUS_STOPS_DB_ID`) + `BusStop` 타입으로 분리 관리
+- 카카오 로컬 API는 클라이언트에 직접 노출 불가 — `app/api/geocode/route.ts` Route Handler를 프록시로 경유
 
 **외부 이미지 도메인** (`next.config.ts`에 등록됨):
 - `**.notion.so` — Notion 커버 이미지
@@ -94,12 +106,16 @@ ROUTES.travel.dashboard(tripId)  // "/travel/[tripId]"
 
 새 작업은 `/tasks/XXX-description.md` 형식으로 생성하고, 완료 후 `docs/ROADMAP.md`를 업데이트한다. API/비즈니스 로직 작업 시 Playwright MCP로 E2E 테스트 수행 필수. 구현 현황은 `docs/ROADMAP.md` 참고.
 
-**현재 구현 완료 (Phase 0~3 일부)**:
+**현재 구현 완료 (Phase 0~5 전체)**:
 - Phase 1 (Task 001~003): 환경설정, 타입 정의, 라우트 골격
 - Phase 2 (Task 004~007): 더미 데이터 기반 전체 UI 완성
-- Phase 3 (Task 008~010): Notion API 연동, 날짜 필터링, 버그픽스
+- Phase 3 (Task 008~014): Notion API 연동, 필터링, 지도 마커, Cost/CheckBox, 투어버스 노선
+- Phase 4 (Task 015~017): 다크모드, 성능 최적화, Vercel 배포
+- Phase 5 (Task 018~019): GPS 현재 위치 표시, PWA 오프라인 지원
 
-**다음 작업**: Task 012 (On-demand ISR 새로고침 버튼)
+**배포 URL**: https://my-travel-mu.vercel.app/
+
+**환경변수**: `NOTION_API_KEY`, `NOTION_TRIPS_DB_ID`, `NOTION_PLACES_DB_ID`, `NOTION_BUS_STOPS_DB_ID`, `NEXT_PUBLIC_KAKAO_MAP_APP_KEY`
 
 ## Claude Code Hooks
 
