@@ -21,6 +21,9 @@ interface MapViewProps {
   showCurrentLocation?: boolean
   // 현재 위치 좌표 — Geolocation API에서 수신한 값
   currentPosition?: { lat: number; lng: number } | null
+  // 이동할 좌표 — 값이 바뀔 때마다 해당 위치로 map.panTo() 실행
+  // MapViewWrapper에서 "내 위치로 이동" 버튼 클릭 시 position 값을 그대로 전달
+  panToPosition?: { lat: number; lng: number } | null
 }
 
 export default function MapView({
@@ -28,6 +31,7 @@ export default function MapView({
   busStops = [],
   showCurrentLocation = false,
   currentPosition = null,
+  panToPosition = null,
 }: MapViewProps) {
   // mapContainerRef: 카카오 지도 SDK가 DOM을 직접 제어하므로 ref로 관리
   const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -235,6 +239,15 @@ export default function MapView({
       renderMarkers(places)
     }
   }, [isMapInitialized, places, renderMarkers])
+
+  // panToPosition 변경 시 해당 좌표로 지도 중심 이동
+  // MapViewWrapper의 "내 위치로 이동" 버튼 클릭 → position 값을 그대로 전달
+  useEffect(() => {
+    if (isMapInitialized && mapRef.current && panToPosition) {
+      const latlng = new window.kakao.maps.LatLng(panToPosition.lat, panToPosition.lng)
+      mapRef.current.panTo(latlng)
+    }
+  }, [isMapInitialized, panToPosition])
 
   // Script onLoad 핸들러 — 최초 페이지 로드 시 스크립트 다운로드 완료 후 호출
   const handleScriptLoad = useCallback(() => {
