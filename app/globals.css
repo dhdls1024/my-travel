@@ -124,3 +124,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 카카오 지도 팝업 다크모드 스타일
+   kakao.maps.CustomOverlay는 React 트리 밖에 삽입되므로 Tailwind 클래스 대신
+   globals.css에서 .dark 선택자로 직접 오버라이드 */
+.dark .kakao-popup {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+.dark .kakao-popup .kakao-popup-name {
+  color: #f9fafb !important;
+}
+
+.dark .kakao-popup .kakao-popup-memo {
+  color: #9ca3af !important;
+}
+
+.dark .kakao-popup-tail {
+  border-top-color: #1f2937 !important;
+}

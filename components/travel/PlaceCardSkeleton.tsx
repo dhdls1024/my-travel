@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 // 왼쪽 컬러 바 자리, 카테고리 배지, 장소명, 메모 영역을 Skeleton으로 대체한다
 export default function PlaceCardSkeleton() {
   return (
-    <Card className="relative overflow-hidden py-0">
+    <Card className="relative overflow-hidden py-0" role="status" aria-live="polite" aria-busy="true" aria-label="로딩 중">
       {/* 왼쪽 카테고리 컬러 바 자리 — PlaceCard와 동일한 위치/크기 */}
       <div className="absolute inset-y-0 left-0 w-1">
         <Skeleton className="h-full w-full" />

@@ -9,7 +9,7 @@ const COVER_HEIGHT_PX = 192
 
 export default function TripCardSkeleton() {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden" role="status" aria-live="polite" aria-busy="true" aria-label="로딩 중">
       {/* 커버 이미지 영역 스켈레톤 */}
       <Skeleton
         className="w-full rounded-none"

@@ -44,6 +44,7 @@ export default function CategoryTabs({
           {/* 전체 탭 */}
           <TabsTrigger
             value="전체"
+            aria-pressed={currentValue === "전체"}
             className="data-[state=active]:bg-accent flex items-center gap-1.5 rounded-md px-3 py-1.5"
           >
             {/* 전체 탭에는 컬러 도트 없음 */}
@@ -64,6 +65,7 @@ export default function CategoryTabs({
             <TabsTrigger
               key={category}
               value={category}
+              aria-pressed={currentValue === category}
               className="data-[state=active]:bg-accent flex items-center gap-1.5 rounded-md px-3 py-1.5"
             >
               {/* 카테고리 컬러 도트 — MARKER_COLORS 상수 기반 */}

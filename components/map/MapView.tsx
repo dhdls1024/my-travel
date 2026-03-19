@@ -243,7 +243,7 @@ export default function MapView({ places, busStops = [] }: MapViewProps) {
       />
       {/* 지도 컨테이너 — h-full로 부모 높이를 그대로 사용
           부모 컴포넌트에서 반드시 고정 높이를 지정해야 지도가 렌더링됨 */}
-      <div ref={mapContainerRef} className="h-full w-full" />
+      <div ref={mapContainerRef} className="h-full w-full" role="application" aria-label="여행 장소 지도" />
 
       {/* 투어버스 노선 오버레이 — 지도 초기화 완료 후 렌더링
           busStops가 있을 때만 마운트하여 불필요한 카카오 API 호출 방지 */}

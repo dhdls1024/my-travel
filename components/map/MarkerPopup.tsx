@@ -18,7 +18,7 @@ export function createPopupHTML(place: Place): string {
 
   // 메모 영역 — 값이 있을 때만 렌더링
   const memoHTML = place.memo
-    ? `<p style="font-size:12px; color:#6B7280; margin:0 0 6px 0; line-height:1.4;">${place.memo}</p>`
+    ? `<p class="kakao-popup-memo" style="font-size:12px; color:#6B7280; margin:0 0 6px 0; line-height:1.4;">${place.memo}</p>`
     : ""
 
   // 외부 링크 영역 — url이 있을 때만 렌더링, target="_blank"로 새 탭 열기
@@ -34,7 +34,7 @@ export function createPopupHTML(place: Place): string {
     : ""
 
   return `
-    <div style="position:relative; background:#fff; border-radius:8px; padding:12px 16px; min-width:180px; max-width:240px; box-shadow:0 4px 12px rgba(0,0,0,0.15); border:1px solid #e5e7eb;">
+    <div class="kakao-popup" style="position:relative; background:#fff; border-radius:8px; padding:12px 16px; min-width:180px; max-width:240px; box-shadow:0 4px 12px rgba(0,0,0,0.15); border:1px solid #e5e7eb;">
 
       <!-- 카테고리 컬러 좌측 바 -->
       <div style="position:absolute; top:0; left:0; bottom:0; width:4px; border-radius:8px 0 0 8px; background:${categoryColor};"></div>
@@ -55,7 +55,7 @@ export function createPopupHTML(place: Place): string {
         </span>
 
         <!-- 장소명 -->
-        <p style="font-weight:600; font-size:14px; margin:0 0 4px 0; color:#111827;">
+        <p class="kakao-popup-name" style="font-weight:600; font-size:14px; margin:0 0 4px 0; color:#111827;">
           ${place.name}
         </p>
 
@@ -65,7 +65,7 @@ export function createPopupHTML(place: Place): string {
     </div>
 
     <!-- 말풍선 꼬리 삼각형 — 마커 위치를 가리키는 화살표 -->
-    <div style="position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent; border-top:8px solid #fff;"></div>
+    <div class="kakao-popup-tail" style="position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent; border-top:8px solid #fff;"></div>
   `
 }
 

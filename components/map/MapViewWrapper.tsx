@@ -24,7 +24,7 @@ const MapViewDynamic = dynamic(() => import("@/components/map/MapView"), {
   ssr: false,
   loading: () => (
     // 지도 로딩 중 플레이스홀더 — 동일한 높이 유지하여 레이아웃 시프트 방지
-    <div className="flex h-full w-full items-center justify-center bg-gray-100">
+    <div className="flex h-full w-full items-center justify-center bg-muted">
       <p className="text-muted-foreground text-sm">지도를 불러오는 중...</p>
     </div>
   ),
@@ -130,7 +130,7 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
             value={selectedDate ?? ALL_DATES_VALUE}
             onValueChange={handleDateChange}
           >
-            <SelectTrigger className="w-32 bg-white shadow-md">
+            <SelectTrigger className="w-32 bg-white text-gray-900 shadow-md hover:bg-white dark:bg-zinc-900 dark:text-white dark:border-zinc-700 dark:hover:bg-zinc-900">
               <SelectValue placeholder="날짜 선택" />
             </SelectTrigger>
             <SelectContent>
@@ -153,7 +153,7 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
               "rounded-md px-3 py-1.5 text-xs font-medium shadow-md transition-colors",
               showTourBus
                 ? "bg-amber-500 text-white"
-                : "border border-gray-200 bg-white text-gray-600"
+                : "border border-gray-200 bg-white text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
             )}
           >
             🚌 투어버스 노선
