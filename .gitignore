@@ -45,3 +45,6 @@ next-env.d.ts
 .claude/settings.local.json
 ./claude/hooks/slack-complete.sh
 ./claude/hooks/slack-permission.sh
+.claude/agent-memory/
+.claude/plans/
+.playwright-mcp/
