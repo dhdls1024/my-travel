@@ -132,22 +132,36 @@ export default function MapView({
       // 카테고리 컬러 원형 마커 — kakao.maps.CustomOverlay로 HTML 직접 삽입
       // 기본 Marker 대신 CustomOverlay를 사용하는 이유:
       //   기본 Marker는 이미지 기반이라 카테고리별 색상 적용이 번거로움
+      // 구조: flex column 컨테이너 → 이름 라벨(위) → 원형 dot(아래)
       const markerColor = MARKER_COLORS[place.category]
       const markerContent = `
         <div style="
-          width:28px; height:28px; border-radius:50%;
-          background:${markerColor}; border:2px solid #fff;
-          box-shadow:0 2px 6px rgba(0,0,0,0.3);
-          cursor:pointer; display:flex; align-items:center; justify-content:center;
+          display:flex; flex-direction:column; align-items:center;
+          cursor:pointer;
         " data-place-id="${place.id}">
-          <div style="width:8px;height:8px;border-radius:50%;background:#fff;"></div>
+          <div style="
+            font-size:10px; color:#333; background:#fff;
+            padding:2px 4px; border-radius:4px;
+            box-shadow:0 1px 4px rgba(0,0,0,0.2);
+            text-align:center; margin-bottom:2px;
+            max-width:70px; overflow:hidden;
+            text-overflow:ellipsis; white-space:nowrap;
+          ">${place.name}</div>
+          <div style="
+            width:28px; height:28px; border-radius:50%;
+            background:${markerColor}; border:2px solid #fff;
+            box-shadow:0 2px 6px rgba(0,0,0,0.3);
+            display:flex; align-items:center; justify-content:center;
+          ">
+            <div style="width:8px;height:8px;border-radius:50%;background:#fff;"></div>
+          </div>
         </div>
       `
 
       const markerOverlay = new window.kakao.maps.CustomOverlay({
         position,
         content: markerContent,
-        yAnchor: 0.5,
+        yAnchor: 1.0, // 라벨+dot 전체 높이 기준으로 dot 하단이 좌표에 맞도록 조정
         xAnchor: 0.5,
         zIndex: 1,
       })

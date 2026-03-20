@@ -101,11 +101,11 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
     undefined
   )
 
-  // showTourBus: 투어버스 노선 표시 여부 — 기본값 true (처음부터 노선 표시)
-  const [showTourBus, setShowTourBus] = useState(true)
+  // showTourBus: 투어버스 노선 표시 여부 — 기본값 false (버튼 클릭 시 활성화)
+  const [showTourBus, setShowTourBus] = useState(false)
 
-  // showCurrentLocation: GPS 현재 위치 마커 표시 토글 — 기본값 false (명시적 활성화 요구)
-  const [showCurrentLocation, setShowCurrentLocation] = useState(false)
+  // showCurrentLocation: GPS 현재 위치 마커 표시 토글 — 기본값 true (진입 시 바로 표시)
+  const [showCurrentLocation, setShowCurrentLocation] = useState(true)
 
   // panToPosition: "내 위치로 이동" 버튼 클릭 시 MapView로 전달할 좌표
   // 클릭할 때마다 새 객체를 할당해 useEffect 의존성이 바뀌도록 함

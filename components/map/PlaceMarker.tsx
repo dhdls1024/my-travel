@@ -13,19 +13,33 @@ interface PlaceMarkerProps {
   map: any
 }
 
-// createMarkerContent — 카테고리 컬러 원형 마커 HTML 문자열 생성
+// createMarkerContent — 카테고리 컬러 원형 마커 + 장소 이름 라벨 HTML 문자열 생성
 // kakao.maps.CustomOverlay의 content 속성에 직접 삽입하여 사용
 // data-place-id 속성: MapView에서 DOM 클릭 이벤트 바인딩 시 마커를 특정하는 데 사용
+// 구조: 최상위 flex 컨테이너(column) → 이름 라벨(위) → 원형 dot(아래)
 export function createMarkerContent(place: Place): string {
   const color = MARKER_COLORS[place.category]
   return `
     <div style="
-      width:28px; height:28px; border-radius:50%;
-      background:${color}; border:2px solid #fff;
-      box-shadow:0 2px 6px rgba(0,0,0,0.3);
-      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      display:flex; flex-direction:column; align-items:center;
+      cursor:pointer;
     " data-place-id="${place.id}">
-      <div style="width:8px;height:8px;border-radius:50%;background:#fff;"></div>
+      <div style="
+        font-size:10px; color:#333; background:#fff;
+        padding:2px 4px; border-radius:4px;
+        box-shadow:0 1px 4px rgba(0,0,0,0.2);
+        text-align:center; margin-bottom:2px;
+        max-width:70px; overflow:hidden;
+        text-overflow:ellipsis; white-space:nowrap;
+      ">${place.name}</div>
+      <div style="
+        width:28px; height:28px; border-radius:50%;
+        background:${color}; border:2px solid #fff;
+        box-shadow:0 2px 6px rgba(0,0,0,0.3);
+        display:flex; align-items:center; justify-content:center;
+      ">
+        <div style="width:8px;height:8px;border-radius:50%;background:#fff;"></div>
+      </div>
     </div>
   `
 }
