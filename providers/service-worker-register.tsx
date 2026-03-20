@@ -10,6 +10,10 @@ export function ServiceWorkerRegister() {
     // SSR 방어 및 SW 미지원 브라우저 처리
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return
 
+    // 개발 환경에서는 SW를 등록하지 않음
+    // SW가 HMR 번들을 캐싱하면 Turbopack 모듈 불일치 오류 발생
+    if (process.env.NODE_ENV === "development") return
+
     // 페이지 로드 완료 후 SW 등록 — 초기 렌더링 성능 영향 최소화
     // load 이벤트 이후 등록하면 중요 리소스 다운로드를 방해하지 않음
     window.addEventListener("load", () => {
