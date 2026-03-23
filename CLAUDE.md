@@ -9,11 +9,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 개발 명령어
 
 ```bash
-npm run dev      # 개발 서버 (http://localhost:3000)
-npm run build    # 프로덕션 빌드
-npm run lint     # ESLint 실행
-npx shadcn@latest add <component-name>  # shadcn/ui 컴포넌트 추가
+# 개발
+npm run dev           # 개발 서버 실행 (Turbopack)
+npm run build         # 프로덕션 빌드
+npm run check-all     # 모든 검사 통합 실행 (권장)
+
+## 작업 완료 체크리스트
+
+```bash
+npm run check-all     # 모든 검사 통과 확인
+npm run build         # 빌드 성공 확인
 ```
+
+💡 **상세 규칙은 위 개발 가이드 문서들을 참조하세요**
 
 ## 아키텍처
 
