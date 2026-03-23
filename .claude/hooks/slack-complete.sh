@@ -6,7 +6,14 @@ set -euo pipefail
 # stdin에서 JSON 데이터 읽기
 INPUT=$(cat)
 
-# Slack Webhook URL (환경변수로 관리 — shell profile에 SLACK_WEBHOOK_URL 설정)
+# .env.local에서 SLACK_WEBHOOK_URL 로드 (훅 실행 환경은 shell profile을 읽지 않으므로 직접 파싱)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ENV_FILE="$PROJECT_ROOT/.env.local"
+if [ -f "$ENV_FILE" ]; then
+  SLACK_WEBHOOK_URL=$(grep '^SLACK_WEBHOOK_URL=' "$ENV_FILE" | cut -d '=' -f2-)
+fi
+
 SLACK_WEBHOOK_URL="${SLACK_WEBHOOK_URL:-}"
 if [ -z "$SLACK_WEBHOOK_URL" ]; then
   exit 0

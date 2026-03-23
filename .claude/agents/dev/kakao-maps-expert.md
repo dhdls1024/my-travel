@@ -2,7 +2,7 @@
 name: kakao-maps-expert
 description: "Use this agent when you need to implement, debug, or optimize Kakao Maps API features in a web project. This includes map initialization, markers, overlays, polylines, geocoding, search, clustering, route display, and any other Kakao Maps Web API functionality.\\n\\n<example>\\nContext: The user wants to add a Kakao Map with custom markers to their Next.js travel app.\\nuser: \"여행 경로를 보여주는 지도 컴포넌트를 만들어줘. 각 여행지에 커스텀 마커가 표시되어야 해\"\\nassistant: \"카카오 지도 API를 활용한 여행 경로 컴포넌트를 구현하겠습니다. kakao-maps-expert 에이전트를 사용할게요.\"\\n<commentary>\\nThe user needs Kakao Maps API implementation with custom markers and route display. Launch the kakao-maps-expert agent to handle this.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: The user has a bug where the Kakao Map is not rendering in their React component.\\nuser: \"카카오 지도가 화면에 안 나타나는데 왜 그런지 모르겠어. 컴포넌트 코드 확인해줘\"\\nassistant: \"카카오 지도 렌더링 문제를 분석하겠습니다. kakao-maps-expert 에이전트로 진단할게요.\"\\n<commentary>\\nThis is a Kakao Maps API debugging scenario. Use the kakao-maps-expert agent to diagnose and fix the rendering issue.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: The user wants to add address search functionality using Kakao Maps.\\nuser: \"주소 검색해서 지도에 위치 표시하는 기능 추가해줘\"\\nassistant: \"카카오 장소 검색 서비스와 지오코딩 API를 활용해서 구현하겠습니다. kakao-maps-expert 에이전트를 실행할게요.\"\\n<commentary>\\nThe user needs Kakao Maps Places API and geocoding. Launch kakao-maps-expert agent.\\n</commentary>\\n</example>"
 model: sonnet
-color: yellow
+color: red
 memory: project
 ---
 

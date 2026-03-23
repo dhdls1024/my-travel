@@ -2,7 +2,7 @@
 name: notion-db-expert
 description: "Use this agent when you need to interact with Notion API databases, including querying, creating, updating, or managing database entries, properties, and relations. This agent is ideal for tasks involving Notion database schema design, complex filter/sort queries, bulk data operations, or integrating Notion with web applications.\\n\\n<example>\\nContext: The user wants to fetch all items from a Notion database with specific filters.\\nuser: \"노션 데이터베이스에서 상태가 '진행중'인 항목만 가져오고 싶어요\"\\nassistant: \"notion-db-expert 에이전트를 사용해서 해당 쿼리를 처리하겠습니다.\"\\n<commentary>\\n노션 데이터베이스 필터링 작업이 필요하므로 notion-db-expert 에이전트를 Task 도구로 실행합니다.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: The user needs to create a new page/entry in a Notion database.\\nuser: \"노션 데이터베이스에 새 항목을 추가하는 코드를 작성해줘\"\\nassistant: \"notion-db-expert 에이전트를 활용해서 데이터베이스 항목 추가 코드를 작성하겠습니다.\"\\n<commentary>\\n노션 API를 통해 데이터베이스에 새 항목을 생성하는 작업이므로 notion-db-expert 에이전트를 Task 도구로 실행합니다.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: The user wants to design a Notion database schema for a project management system.\\nuser: \"프로젝트 관리용 노션 데이터베이스 스키마를 설계해줘\"\\nassistant: \"notion-db-expert 에이전트로 최적의 데이터베이스 스키마를 설계하겠습니다.\"\\n<commentary>\\n노션 데이터베이스 스키마 설계 전문 지식이 필요하므로 notion-db-expert 에이전트를 Task 도구로 실행합니다.\\n</commentary>\\n</example>"
 model: sonnet
-color: yellow
+color: red
 memory: project
 ---
 
