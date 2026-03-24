@@ -63,6 +63,7 @@ export const MARKER_COLORS = {
   숙소: "#22C55E", // green-500
   맛집: "#F97316", // orange-500
   명소: "#EF4444", // red-500
+  카페: "#EAB308", // yellow-500
 } as const
 
 // 카테고리 레이블 상수 (객체 — key/value 조회용)
@@ -72,11 +73,12 @@ export const CATEGORY_LABELS = {
   숙소: "숙소",
   맛집: "맛집",
   명소: "명소",
+  카페: "카페",
 } as const
 
 // 카테고리 순서 보장 배열 — 탭/필터 UI 렌더링 순서 고정용
 // (객체는 키 순서가 보장되지 않으므로 별도 배열로 관리)
-export const CATEGORY_LIST = ["교통", "숙소", "맛집", "명소"] as const
+export const CATEGORY_LIST = ["교통", "숙소", "맛집", "명소", "카페"] as const
 
 // 여행 상태 순서 보장 배열 — 상태 뱃지/셀렉트 UI 렌더링 순서 고정용
 export const TRIP_STATUS_LABELS = ["계획중", "확정", "완료"] as const
