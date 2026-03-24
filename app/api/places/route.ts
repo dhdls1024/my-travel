@@ -28,7 +28,7 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
 const PlaceInputSchema = z
   .object({
     name: z.string().min(1).max(100),
-    category: z.enum(["교통", "숙소", "맛집", "명소"]).default("명소"),
+    category: z.enum(["교통", "숙소", "맛집", "명소", "카페"]).default("명소"),
     tripId: z.string().min(1),
     // 빈 문자열('')도 허용 — 클라이언트 input[type=date] 미입력 시 빈 문자열 전달됨
     visitDate: z.string().regex(DATE_REGEX).optional().or(z.literal("")),
