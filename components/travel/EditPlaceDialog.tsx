@@ -41,7 +41,7 @@ import type { Place, PlaceCategory } from "@/types/travel"
 // url은 빈 문자열('')도 유효 — 입력하지 않은 경우 허용
 const editPlaceSchema = z.object({
   name: z.string().min(1, "장소명을 입력하세요").max(100),
-  category: z.enum(["교통", "숙소", "맛집", "명소"]),
+  category: z.enum(["교통", "숙소", "맛집", "명소", "카페"]),
   visitDate: z.string().optional(),
   visitDateEnd: z.string().optional(),
   memo: z.string().max(2000).optional(),

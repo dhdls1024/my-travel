@@ -19,7 +19,7 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
 // PATCH 요청 body 검증 스키마 — name만 필수, 나머지는 부분 업데이트
 const patchPlaceSchema = z.object({
   name: z.string().min(1, "장소명을 입력하세요").max(100),
-  category: z.enum(["교통", "숙소", "맛집", "명소"]).optional(),
+  category: z.enum(["교통", "숙소", "맛집", "명소", "카페"]).optional(),
   visitDate: z.string().regex(DATE_REGEX).optional().or(z.literal("")),
   visitDateEnd: z.string().regex(DATE_REGEX).optional().or(z.literal("")),
   memo: z.string().max(MEMO_MAX_LENGTH).optional(),
