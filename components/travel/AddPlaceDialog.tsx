@@ -46,6 +46,8 @@ const addPlaceSchema = z.object({
   visitDate: z.string().optional(),
   visitDateEnd: z.string().optional(),
   memo: z.string().max(2000).optional(),
+  // address: 도로명/지번 주소 — 있으면 좌표 조회 우선 사용, 없으면 장소명 검색 폴백
+  address: z.string().max(200).optional(),
   url: z
     .string()
     .url("올바른 URL을 입력하세요")
@@ -150,6 +152,16 @@ function FormFields({ register, control, errors, isLoading }: FormFieldsProps) {
             {errors.name.message}
           </p>
         )}
+      </FormFieldWrapper>
+
+      {/* 1-1. 주소 — 선택, 지도 마커 좌표 정확도 개선용 (입력 시 장소명보다 우선 검색) */}
+      <FormFieldWrapper label="주소" htmlFor="address">
+        <Input
+          id="address"
+          placeholder="미입력시 장소명으로 검색"
+          disabled={isLoading}
+          {...register("address")}
+        />
       </FormFieldWrapper>
 
       {/* 2. 카테고리 — shadcn Select는 RHF register 직접 사용 불가, Controller 사용 */}
@@ -280,6 +292,7 @@ function makeSubmitHandler(opts: MakeSubmitHandlerOptions) {
           visitDate: data.visitDate,
           visitDateEnd: data.visitDateEnd,
           memo: data.memo,
+          address: data.address,
           url: data.url,
           cost,
           tripId,

@@ -11,6 +11,7 @@ import { z } from "zod"
 // ─── 상수 ─────────────────────────────────────────────────────────────────────
 
 const MEMO_MAX_LENGTH = 2000
+const ADDRESS_MAX_LENGTH = 200
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
 
 // ─── 스키마 ───────────────────────────────────────────────────────────────────
@@ -22,6 +23,8 @@ const patchPlaceSchema = z.object({
   visitDate: z.string().regex(DATE_REGEX).optional().or(z.literal("")),
   visitDateEnd: z.string().regex(DATE_REGEX).optional().or(z.literal("")),
   memo: z.string().max(MEMO_MAX_LENGTH).optional(),
+  // address: 도로명/지번 주소 — 있으면 좌표 조회 우선 사용, 없으면 장소명 검색 폴백
+  address: z.string().max(ADDRESS_MAX_LENGTH).optional(),
   url: z.string().url().optional().or(z.literal("")),
   costRaw: z.string().optional(),
 })
@@ -87,6 +90,14 @@ function buildPatchProperties(data: PatchPlaceInput): Record<string, unknown> {
   if (data.costRaw !== undefined) {
     const cost = data.costRaw.length > 0 ? Number(data.costRaw) : null
     properties["Cost"] = { number: cost }
+  }
+
+  // address: 빈값이면 rich_text 빈 배열로 초기화 (컬럼 값 제거)
+  if (data.address !== undefined) {
+    properties["Address"] =
+      data.address.length > 0
+        ? { rich_text: [{ text: { content: data.address.slice(0, ADDRESS_MAX_LENGTH) } }] }
+        : { rich_text: [] }
   }
 
   return properties

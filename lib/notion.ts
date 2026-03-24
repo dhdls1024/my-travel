@@ -312,6 +312,9 @@ function parsePlace(page: PageObjectResponse): Place {
     visitDateEnd: extractDateEnd(props["VisitDate"]),
     // "null" 문자열은 빈 값으로 처리 — Notion DB에 "null"로 입력된 경우 방어
     memo: extractRichText(props["Memo"]).trim().replace(/^null$/i, "") || undefined,
+    // Address: rich_text 타입 — BusStop의 parseBusStop과 동일 패턴
+    // Notion DB에 Address 컬럼이 없어도 extractRichText가 "" 반환하므로 안전
+    address: extractRichText(props["Address"]).trim() || undefined,
     url: extractUrl(props["URL"]),
     // Cost: 예상 비용 (선택) — 입력되지 않으면 undefined
     cost: extractNumber(props["Cost"]),
@@ -387,7 +390,17 @@ export async function getPlaces(tripId: string): Promise<Place[]> {
     places.map(async (place) => {
       // 위경도가 이미 있으면 그대로 반환 — 불필요한 API 호출 방지
       if (place.latitude && place.longitude) return place
-      const coords = await searchPlaceCoords(place.name)
+
+      // address가 있으면 주소 검색 우선 — 동명이인 장소 오탐 방지
+      // 주소 검색 실패 시 장소명 키워드 검색으로 폴백 (기존 방식 유지)
+      let coords = place.address
+        ? await searchAddressCoords(place.address)
+        : null
+
+      if (!coords) {
+        coords = await searchPlaceCoords(place.name)
+      }
+
       if (!coords) return place
       return { ...place, latitude: coords.lat, longitude: coords.lng }
     })

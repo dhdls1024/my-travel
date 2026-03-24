@@ -12,6 +12,9 @@ import { z } from "zod"
 // Notion rich_text 최대 허용 길이 (API 제한: 2000자)
 const MEMO_MAX_LENGTH = 2000
 
+// 주소 최대 허용 길이 — 도로명 주소 기준 충분한 여유
+const ADDRESS_MAX_LENGTH = 200
+
 // ─── Zod 스키마 ──────────────────────────────────────────────────────────────
 
 // YYYY-MM-DD 형식 정규식
@@ -31,6 +34,8 @@ const PlaceInputSchema = z
     visitDate: z.string().regex(DATE_REGEX).optional().or(z.literal("")),
     visitDateEnd: z.string().regex(DATE_REGEX).optional().or(z.literal("")),
     memo: z.string().max(MEMO_MAX_LENGTH).optional(),
+    // address: 도로명/지번 주소 — 있으면 좌표 조회 우선 사용, 없으면 장소명 검색 폴백
+    address: z.string().max(ADDRESS_MAX_LENGTH).optional(),
     // 빈 문자열('')도 허용 — 입력하지 않은 경우와 구분 없이 처리
     url: z.string().url().optional().or(z.literal("")),
     // cost: 0도 유효값이므로 undefined 체크 필수
@@ -67,7 +72,7 @@ const notion = new Client({
  * @returns Notion CreatePageParameters['properties'] 호환 객체
  */
 function buildPlaceProperties(input: PlaceInput): Record<string, unknown> {
-  const { name, category, tripId, visitDate, visitDateEnd, memo, url, cost } =
+  const { name, category, tripId, visitDate, visitDateEnd, memo, address, url, cost } =
     input
 
   const properties: Record<string, unknown> = {
@@ -96,6 +101,14 @@ function buildPlaceProperties(input: PlaceInput): Record<string, unknown> {
   if (memo && memo.length > 0) {
     properties["Memo"] = {
       rich_text: [{ text: { content: memo.slice(0, MEMO_MAX_LENGTH) } }],
+    }
+  }
+
+  // address: 있을 때만 포함 — Notion DB에 Address 컬럼이 없으면 API 오류 방지
+  // 컬럼이 있는 경우에만 이 값이 전달될 것이므로 안전
+  if (address && address.length > 0) {
+    properties["Address"] = {
+      rich_text: [{ text: { content: address.slice(0, ADDRESS_MAX_LENGTH) } }],
     }
   }
 
