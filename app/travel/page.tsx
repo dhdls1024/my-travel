@@ -4,7 +4,7 @@ import { Suspense } from "react"
 import type { Metadata } from "next"
 
 import { SITE_CONFIG } from "@/lib/constants"
-import { getTrips } from "@/lib/notion"
+import { getTrips, getPlacesCount } from "@/lib/notion"
 import TripCard from "@/components/travel/TripCard"
 import TripCardSkeleton from "@/components/travel/TripCardSkeleton"
 
@@ -51,15 +51,18 @@ async function TripList() {
     )
   }
 
+  // 모든 여행의 장소 수를 병렬로 조회 — 순차 호출보다 빠르게 처리
+  const placesCounts = await Promise.all(
+    trips.map((trip) => getPlacesCount(trip.id))
+  )
+
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {trips.map((trip) => (
+      {trips.map((trip, index) => (
         <TripCard
           key={trip.id}
           trip={trip}
-          // Notion 여행 목록 조회 시 장소 수는 별도 조회가 필요하므로 0으로 표시
-          // 여행 대시보드 페이지에서 실제 장소 수를 확인할 수 있음
-          placesCount={0}
+          placesCount={placesCounts[index]}
         />
       ))}
     </div>

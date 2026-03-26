@@ -415,6 +415,39 @@ export async function getPlaces(tripId: string): Promise<Place[]> {
   })
 }
 
+/**
+ * 특정 여행에 속한 장소 수만 빠르게 카운트한다.
+ * — getPlaces()와 달리 카카오 로컬 API 호출 없이 Notion 쿼리 결과만 집계
+ * — 여행 목록 페이지의 "N개 장소" 표시용으로 사용
+ *
+ * @param tripId - 조회할 여행의 Notion 페이지 ID
+ * @returns 장소 수
+ */
+export async function getPlacesCount(tripId: string): Promise<number> {
+  let count = 0
+  let cursor: string | undefined = undefined
+
+  do {
+    const response = await fetchWithRetry(() =>
+      notion.databases.query({
+        database_id: process.env.NOTION_PLACES_DB_ID!,
+        filter: {
+          property: "trips",
+          relation: { contains: tripId },
+        },
+        // 수만 필요하므로 page_size를 최대(100)로 설정해 요청 횟수 최소화
+        page_size: 100,
+        ...(cursor ? { start_cursor: cursor } : {}),
+      })
+    )
+
+    count += response.results.filter(isFullPage).length
+    cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
+  } while (cursor)
+
+  return count
+}
+
 // ─── 투어버스 정류장 파서 ──────────────────────────────────────────────────────
 
 /**
