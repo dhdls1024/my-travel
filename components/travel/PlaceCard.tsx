@@ -141,8 +141,7 @@ export default function PlaceCard({ place, tripId }: PlaceCardProps) {
         aria-hidden="true"
       />
 
-      {/* min-h-[5rem]: 메모 없는 카드도 메모 1줄 있을 때와 동일한 최소 높이 유지 */}
-      <CardContent className="flex items-start justify-between gap-3 px-5 py-4 min-h-[5rem]">
+      <CardContent className="flex items-start justify-between gap-3 px-5 py-4">
         <div className="min-w-0 flex-1 space-y-1.5">
           {/* 카테고리 배지 + 방문일 */}
           <div className="flex flex-wrap items-center gap-2">
@@ -183,9 +182,9 @@ export default function PlaceCard({ place, tripId }: PlaceCardProps) {
           )}
         </div>
 
-        {/* 우측 액션 컬럼 — 외부 링크(위)와 삭제 버튼(아래)를 세로 배치 */}
-        {/* url이 없어도 삭제 버튼은 항상 표시되므로 컬럼 자체는 항상 렌더링 */}
-        <div className="flex flex-col items-center justify-between self-stretch shrink-0">
+        {/* 우측 액션 컬럼 — 외부 링크/수정/삭제 버튼을 세로 배치 */}
+        {/* gap-3으로 고정 간격 — justify-between+self-stretch는 카드가 짧으면 버튼이 붙음 */}
+        <div className="flex flex-col items-center gap-3 shrink-0">
           {/* 외부 링크 버튼 — url 유무에 관계없이 동일 공간 차지 (삭제버튼 위치 고정) */}
           <div className="h-4 w-4">
             {place.url && (
