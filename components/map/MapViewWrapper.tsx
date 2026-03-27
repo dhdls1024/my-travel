@@ -7,7 +7,8 @@ import { useState, useMemo } from "react"
 import dynamic from "next/dynamic"
 
 import { useGeolocation } from "@/lib/use-geolocation"
-import type { Place, BusStop } from "@/types/travel"
+import type { Place, BusStop, PlaceCategory } from "@/types/travel"
+import { CATEGORY_LIST, MARKER_COLORS } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 import {
   Select,
@@ -19,6 +20,8 @@ import {
 
 // 날짜 필터 "전체" 선택 시 사용하는 sentinel 값
 const ALL_DATES_VALUE = "all"
+// 카테고리 필터 "전체" 선택 시 사용하는 sentinel 값
+const ALL_CATEGORIES_VALUE = "all_categories"
 
 // 카카오 SDK는 브라우저 전용 — SSR 환경에서 window 접근 방지를 위해 ssr:false
 const MapViewDynamic = dynamic(() => import("@/components/map/MapView"), {
@@ -101,11 +104,11 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
     undefined
   )
 
+  // selectedCategory: 현재 선택된 카테고리 (undefined = 전체 표시)
+  const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | undefined>(undefined)
+
   // showTourBus: 투어버스 노선 표시 여부 — 기본값 false (버튼 클릭 시 활성화)
   const [showTourBus, setShowTourBus] = useState(false)
-
-  // showCurrentLocation: GPS 현재 위치 마커 표시 토글 — 기본값 true (진입 시 바로 표시)
-  const [showCurrentLocation, setShowCurrentLocation] = useState(true)
 
   // panToPosition: "내 위치로 이동" 버튼 클릭 시 MapView로 전달할 좌표
   // 클릭할 때마다 새 객체를 할당해 useEffect 의존성이 바뀌도록 함
@@ -118,12 +121,14 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
   // places가 변경될 때만 재계산 (useMemo로 최적화)
   const uniqueDates = useMemo(() => extractUniqueDates(places), [places])
 
-  // filteredPlaces: 선택된 날짜에 따라 필터링된 장소 목록
-  // 날짜 미선택(전체)이면 전체 places 반환
+  // filteredPlaces: 날짜 + 카테고리 필터를 순서대로 적용한 장소 목록
+  // 두 필터 모두 미선택(전체)이면 전체 places 반환 (교집합)
   const filteredPlaces = useMemo(() => {
-    if (!selectedDate) return places
-    return places.filter((place) => isPlaceInDateRange(place, selectedDate))
-  }, [places, selectedDate])
+    let result = places
+    if (selectedDate) result = result.filter((p) => isPlaceInDateRange(p, selectedDate))
+    if (selectedCategory) result = result.filter((p) => p.category === selectedCategory)
+    return result
+  }, [places, selectedDate, selectedCategory])
 
   // handleDateChange — Select 변경 시 selectedDate 상태 업데이트
   const handleDateChange = (value: string) => {
@@ -156,6 +161,30 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
           </Select>
         )}
 
+        {/* 카테고리 필터 Select — 항상 표시 (카테고리 색상 dot으로 시각적 구분) */}
+        <Select
+          value={selectedCategory ?? ALL_CATEGORIES_VALUE}
+          onValueChange={(v) =>
+            setSelectedCategory(
+              v === ALL_CATEGORIES_VALUE ? undefined : (v as PlaceCategory)
+            )
+          }
+        >
+          <SelectTrigger className="w-32 bg-white text-gray-900 shadow-md hover:bg-white dark:bg-zinc-900 dark:text-white dark:border-zinc-700 dark:hover:bg-zinc-900">
+            <SelectValue placeholder="카테고리" />
+          </SelectTrigger>
+          <SelectContent>
+            {/* 전체 옵션 — 카테고리 필터 없이 모든 마커 표시 */}
+            <SelectItem value={ALL_CATEGORIES_VALUE}>전체</SelectItem>
+            {CATEGORY_LIST.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {/* 카테고리별 마커 색상 dot — MARKER_COLORS 상수와 동일한 색상 사용 */}
+                <span style={{ color: MARKER_COLORS[cat] }}>●</span> {cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         {/* 투어버스 노선 토글 버튼 — busStops가 있을 때만 표시 */}
         {busStops.length > 0 && (
           <button
@@ -171,22 +200,6 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
           </button>
         )}
 
-        {/* GPS 현재 위치 토글 버튼 — 항상 표시 (busStops 유무 무관) */}
-        {/* permissionDenied: 위치 권한 거부 시 disabled (에러 토스트 없이 조용히 처리) */}
-        <button
-          onClick={() => setShowCurrentLocation((v) => !v)}
-          disabled={permissionDenied}
-          className={cn(
-            "rounded-md px-3 py-1.5 text-xs font-medium shadow-md transition-colors",
-            showCurrentLocation && !permissionDenied
-              ? "bg-blue-500 text-white"
-              : "border border-gray-200 bg-white text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white",
-            permissionDenied && "cursor-not-allowed opacity-50"
-          )}
-        >
-          {permissionDenied ? "📍 위치 권한 필요" : "📍 내 위치"}
-        </button>
-
         {/* 현재 위치로 이동 버튼 — 위치 수신 완료 시에만 노출
             우상단 컨트롤 영역에 배치하여 PC/모바일 모두 지도 영역 안에 표시 */}
         {position && !permissionDenied && (
@@ -201,15 +214,12 @@ export default function MapViewWrapper({ places, busStops = [] }: MapViewWrapper
         )}
       </div>
 
-      {/* 현재 위치로 이동 버튼 — 우상단 컨트롤 영역 하단에 배치
-          position이 있을 때만 표시 (권한 허용 + 좌표 수신 완료) */}
-
       {/* MapView에 필터링된 places와 busStops 전달
           showTourBus가 false이면 빈 배열 전달 → TourBusRoute 미표시 */}
       <MapViewDynamic
         places={filteredPlaces}
         busStops={showTourBus ? busStops : []}
-        showCurrentLocation={showCurrentLocation && !permissionDenied}
+        showCurrentLocation={!permissionDenied}
         currentPosition={position}
         panToPosition={panToPosition}
       />
