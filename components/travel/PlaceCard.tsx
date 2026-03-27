@@ -141,7 +141,8 @@ export default function PlaceCard({ place, tripId }: PlaceCardProps) {
         aria-hidden="true"
       />
 
-      <CardContent className="flex items-start justify-between gap-3 px-5 py-4">
+      {/* min-h-[5rem]: 메모 없는 카드도 메모 1줄 있을 때와 동일한 최소 높이 유지 */}
+      <CardContent className="flex items-start justify-between gap-3 px-5 py-4 min-h-[5rem]">
         <div className="min-w-0 flex-1 space-y-1.5">
           {/* 카테고리 배지 + 방문일 */}
           <div className="flex flex-wrap items-center gap-2">
