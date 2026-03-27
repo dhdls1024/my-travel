@@ -119,9 +119,10 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
         </div>
       </div>
 
-      {/* ── 필터 영역: 카테고리 탭 + 날짜 필터 가로 배치 ───────────────── */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        {/* 카테고리 탭 — counts prop 은 향후 CategoryTabs 업데이트 시 전달 */}
+      {/* ── 필터 영역: 카테고리 탭(위) + 날짜 필터(아래) 세로 배치 ─────── */}
+      {/* flex-col로 분리 — CategoryTabs의 flex-wrap이 DateFilter와 섞이지 않도록 */}
+      <div className="mb-6 flex flex-col gap-2">
+        {/* 카테고리 탭 */}
         <CategoryTabs
           selected={selectedCategory}
           onSelect={setSelectedCategory}
@@ -130,11 +131,13 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
 
         {/* 날짜 드롭다운 필터 */}
         {availableDates.length > 0 && (
-          <DateFilter
-            dates={availableDates}
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-          />
+          <div>
+            <DateFilter
+              dates={availableDates}
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+            />
+          </div>
         )}
       </div>
 
