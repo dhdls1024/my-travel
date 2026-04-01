@@ -5,7 +5,7 @@
 
 import { useState, useMemo } from "react"
 import Link from "next/link"
-import { Map } from "lucide-react"
+import { Map, SlidersHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { ROUTES, CATEGORY_LIST } from "@/lib/constants"
@@ -40,22 +40,21 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   // ── 카테고리별 카운트 계산 ──────────────────────────────────────────────────
-  // CATEGORY_LIST 순서를 보장하기 위해 배열 기반으로 계산
-  // useMemo: places 가 바뀔 때만 재계산
+  // checked=true 장소만 기준으로 카운트 — filteredPlaces에서 실제 렌더링되는 수와 일치시킴
+  // (checked=false 장소를 포함하면 탭 숫자 > 실제 카드 수 불일치 발생)
   const categoryCounts = useMemo(() => {
+    const checkedPlaces = places.filter((p) => p.checked)
     const counts: Record<string, number> = {
-      전체: places.length,
+      전체: checkedPlaces.length,
     }
     for (const cat of CATEGORY_LIST) {
-      counts[cat] = places.filter((p) => p.category === cat).length
+      counts[cat] = checkedPlaces.filter((p) => p.category === cat).length
     }
     return counts
   }, [places])
 
   // ── 방문 날짜 목록 추출 ────────────────────────────────────────────────────
   // visitDate 가 있는 장소의 날짜를 수집
-  // 범위 날짜(visitDateEnd 존재)인 경우 start~end 사이의 모든 날짜를 전개하여 추가
-  // 중복 제거 → 오름차순 정렬
   const availableDates = useMemo(() => {
     const dateSet = new Set<string>()
     for (const place of places) {
@@ -88,7 +87,6 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
     }
 
     // 2. 날짜 필터 (null 이면 전체 통과)
-    // 범위 날짜(visitDateEnd 존재)인 경우 start~end 사이에 선택 날짜가 포함되면 매칭
     if (selectedDate !== null) {
       result = result.filter((p) => {
         if (!p.visitDate) return false
@@ -105,61 +103,72 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
   // ── 지도 링크 URL ──────────────────────────────────────────────────────────
   const mapUrl = ROUTES.travel.map(trip.id)
 
+  // ── 비용 합계 계산 ─────────────────────────────────────────────────────────
+  const totalCost = filteredPlaces.reduce((sum, p) => sum + (p.cost ?? 0), 0)
+  const hasCost = filteredPlaces.some((p) => p.cost !== undefined)
+
   return (
-    <div className="container mx-auto px-4 py-6">
-      {/* ── 상단: 여행 요약 + 새로고침 버튼 ────────────────────────────── */}
+    <div className="container mx-auto px-4 py-6 sm:py-8">
+      {/* ── 상단: 여행 요약 + 액션 버튼 ───────────────────────────────────── */}
       <div className="mb-6 flex items-start justify-between gap-4">
         {/* 여행 제목, 기간, 상태 요약 */}
         <TripSummary trip={trip} />
 
         {/* 우측 상단: 새로고침 + 장소 추가 버튼 */}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2 pt-7">
           <RefreshButton tripId={trip.id} />
           <AddPlaceDialog tripId={trip.id} />
         </div>
       </div>
 
-      {/* ── 필터 영역: 카테고리 탭(위) + 날짜 필터(아래) 세로 배치 ─────── */}
-      {/* flex-col로 분리 — CategoryTabs의 flex-wrap이 DateFilter와 섞이지 않도록 */}
-      <div className="mb-6 flex flex-col gap-2">
-        {/* 카테고리 탭 */}
-        <CategoryTabs
-          selected={selectedCategory}
-          onSelect={setSelectedCategory}
-          counts={categoryCounts}
-        />
-
-        {/* 날짜 드롭다운 필터 */}
-        {availableDates.length > 0 && (
-          <div>
-            <DateFilter
-              dates={availableDates}
-              selected={selectedDate}
-              onSelect={setSelectedDate}
+      {/* ── 필터 영역 — 배경 카드로 강조 ─────────────────────────────────── */}
+      <div className="mb-5 rounded-xl border border-border/60 bg-card p-3 shadow-sm">
+        <div className="flex flex-col gap-2">
+          {/* 필터 아이콘 + 카테고리 탭 */}
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <CategoryTabs
+              selected={selectedCategory}
+              onSelect={setSelectedCategory}
+              counts={categoryCounts}
             />
+          </div>
+
+          {/* 날짜 드롭다운 필터 */}
+          {availableDates.length > 0 && (
+            <div className="pl-5">
+              <DateFilter
+                dates={availableDates}
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── 비용 합계 + 결과 수 — 필터 기준으로 집계, cost 있는 장소가 1개 이상일 때만 표시 */}
+      <div className="mb-4 flex items-center justify-between text-sm">
+        <span className="text-muted-foreground text-xs">
+          {filteredPlaces.length}개 장소
+        </span>
+        {hasCost && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>예상 합계</span>
+            <span className="font-semibold text-foreground">
+              {totalCost.toLocaleString()}원
+            </span>
           </div>
         )}
       </div>
 
-      {/* ── 비용 합계 — 현재 필터 기준으로 cost 합산, cost 있는 장소가 1개 이상일 때만 표시 */}
-      {filteredPlaces.some((p) => p.cost !== undefined) && (
-        <div className="mb-4 flex items-center justify-end gap-1.5 text-sm text-muted-foreground">
-          <span>예상 합계</span>
-          <span className="font-semibold text-foreground">
-            {filteredPlaces
-              .reduce((sum, p) => sum + (p.cost ?? 0), 0)
-              .toLocaleString()}
-            원
-          </span>
-        </div>
-      )}
-
       {/* ── 메인 콘텐츠: 2열 레이아웃 (데스크톱) / 단일 열 (모바일) ─────── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* 왼쪽 열: 장소 카드 목록 (전체 너비 / 데스크톱에서 2/3) */}
-        <section className="lg:col-span-2">
+        {/* pb-20 lg:pb-0: 모바일에서 고정 플로팅 버튼 높이만큼 여백 확보 — 마지막 카드 가림 방지 */}
+        <section className="lg:col-span-2 pb-20 lg:pb-0">
           {filteredPlaces.length > 0 ? (
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {filteredPlaces.map((place) => (
                 <li key={place.id}>
                   {/* tripId: 삭제 후 revalidatePath 처리에 필요한 여행 ID */}
@@ -169,12 +178,14 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
             </ul>
           ) : (
             /* 빈 상태 메시지 — 필터 결과가 없을 때 */
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-              <Map className="mb-3 h-10 w-10 text-muted-foreground/50" />
-              <p className="text-sm font-medium text-muted-foreground">
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 py-16 text-center">
+              <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-2xl">
+                🗺️
+              </div>
+              <p className="text-sm font-medium text-foreground">
                 조건에 맞는 장소가 없습니다
               </p>
-              <p className="mt-1 text-xs text-muted-foreground/70">
+              <p className="mt-1.5 text-xs text-muted-foreground">
                 필터를 변경하거나 전체 보기를 선택하세요
               </p>
             </div>
@@ -182,29 +193,30 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
         </section>
 
         {/* 오른쪽 열: 지도 placeholder — 데스크톱에서만 표시 */}
-        {/*
-         * lg:flex: 모바일에서는 숨기고 데스크톱에서만 표시
-         * 지도 컴포넌트는 Phase 2(app/travel/[tripId]/map/page.tsx)에서 구현 예정
-         */}
         <aside className="hidden lg:col-span-1 lg:flex lg:flex-col">
           <div
             className={cn(
               "flex flex-1 flex-col items-center justify-center",
-              "rounded-lg bg-muted/40 border",
+              "rounded-2xl border border-border/60 bg-card",
               "min-h-[400px] gap-4",
             )}
           >
             {/* 지도 아이콘 */}
-            <Map className="h-12 w-12 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">지도에서 장소를 확인하세요</p>
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted text-2xl">
+              🗺️
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-foreground">지도에서 확인하기</p>
+              <p className="mt-1 text-xs text-muted-foreground">장소의 위치를 지도에서 확인하세요</p>
+            </div>
 
             {/* 지도 페이지로 이동 링크 */}
             <Link
               href={mapUrl}
               className={cn(
-                "inline-flex items-center gap-2 rounded-md px-4 py-2",
+                "inline-flex items-center gap-2 rounded-xl px-5 py-2.5",
                 "bg-primary text-primary-foreground text-sm font-medium",
-                "transition-opacity hover:opacity-90",
+                "transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0",
               )}
             >
               <Map className="h-4 w-4" />
@@ -215,18 +227,15 @@ export default function DashboardClient({ trip, places }: DashboardClientProps) 
       </div>
 
       {/* ── 모바일 플로팅 버튼: 지도 보기 ───────────────────────────────── */}
-      {/*
-       * lg:hidden: 데스크톱에서는 숨기고 모바일에서만 표시
-       * fixed + bottom 으로 화면 하단에 고정
-       */}
-      <div className="fixed bottom-6 right-6 lg:hidden">
+      {/* lg:hidden: 데스크톱에서는 숨기고 모바일에서만 표시 */}
+      <div className="fixed bottom-6 right-5 lg:hidden">
         <Link
           href={mapUrl}
           aria-label="지도 보기"
           className={cn(
-            "flex items-center gap-2 rounded-full px-5 py-3 shadow-lg",
-            "bg-primary text-primary-foreground text-sm font-medium",
-            "transition-transform active:scale-95",
+            "flex items-center gap-2 rounded-full px-5 py-3 shadow-xl",
+            "bg-primary text-primary-foreground text-sm font-semibold",
+            "transition-all active:scale-95 hover:shadow-2xl",
           )}
         >
           <Map className="h-4 w-4" />
