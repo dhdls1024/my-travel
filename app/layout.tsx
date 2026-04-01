@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { DM_Sans, Playfair_Display, Geist_Mono } from "next/font/google"
 // cn: clsx + tailwind-merge 조건부 클래스 병합 유틸리티
 import { cn } from "@/lib/utils"
 // ThemeProvider: next-themes의 다크모드 Provider (SSR 안전)
@@ -19,9 +19,20 @@ import { ServiceWorkerRegister } from "@/providers/service-worker-register"
 import "./globals.css"
 import { SITE_CONFIG } from "@/lib/constants"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// DM Sans: 모던하고 가독성 좋은 본문 폰트 — 여행 앱 UX에 적합
+// weight: "variable" 설정 시 axes 옵션 사용 가능 (가변 폰트)
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+})
+
+// Playfair Display: 고급 세리프 폰트 — 헤드라인에 여행 잡지 느낌 부여
+const playfairDisplay = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  style: ["normal", "italic"],
 })
 
 const geistMono = Geist_Mono({
@@ -54,7 +65,7 @@ export default function RootLayout({
     // (서버/클라이언트 테마 초기값 불일치는 의도된 동작)
     <html lang="ko" suppressHydrationWarning>
       <body
-        className={cn(geistSans.variable, geistMono.variable, "flex min-h-screen flex-col antialiased")}
+        className={cn(dmSans.variable, playfairDisplay.variable, geistMono.variable, "flex min-h-screen flex-col antialiased")}
       >
         <ThemeProvider
           attribute="class"          // .dark 클래스로 CSS 변수 전환

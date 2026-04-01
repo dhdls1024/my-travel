@@ -22,7 +22,7 @@ const SKELETON_COUNT = 3
 // 스켈레톤 fallback 컴포넌트 — Suspense 경계 내부에서 사용
 function TripListSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
         // 스켈레톤은 key로 index 사용 (정적 목록이므로 안전)
         <TripCardSkeleton key={index} />
@@ -40,11 +40,14 @@ async function TripList() {
   // 여행이 없을 때 빈 상태 메시지 표시
   if (trips.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-lg font-medium text-muted-foreground">
-          아직 등록된 여행이 없어요.
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 py-24 text-center">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted text-3xl">
+          ✈️
+        </div>
+        <p className="text-base font-medium text-foreground">
+          아직 등록된 여행이 없어요
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Notion에서 여행 계획을 추가하면 여기에 표시됩니다.
         </p>
       </div>
@@ -57,7 +60,7 @@ async function TripList() {
   )
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {trips.map((trip, index) => (
         <TripCard
           key={trip.id}
@@ -72,12 +75,21 @@ async function TripList() {
 export default async function TravelListPage() {
   return (
     <main className="min-h-screen">
-      <section className="container mx-auto px-4 py-10">
+      <section className="container mx-auto px-4 py-10 sm:py-14">
+
         {/* 페이지 헤더 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">여행 목록</h1>
-          <p className="mt-2 text-muted-foreground">
-            나의 여행 계획을 한눈에 확인하고 관리하세요.
+        <div className="mb-10">
+          <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            My Trips
+          </p>
+          <h1
+            className="text-4xl font-bold tracking-tight sm:text-5xl"
+            style={{ fontFamily: "var(--font-playfair, 'Playfair Display', serif)" }}
+          >
+            나의 여행 목록
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground sm:text-base">
+            계획부터 완료까지, 모든 여행을 한눈에 확인하세요.
           </p>
         </div>
 
@@ -85,6 +97,7 @@ export default async function TravelListPage() {
         <Suspense fallback={<TripListSkeleton />}>
           <TripList />
         </Suspense>
+
       </section>
     </main>
   )

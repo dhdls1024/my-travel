@@ -7,7 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  /* 프로젝트 폰트를 DM Sans + Playfair Display로 교체 */
+  --font-sans: var(--font-dm-sans), "DM Sans", sans-serif;
+  --font-display: var(--font-playfair), "Playfair Display", serif;
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -48,72 +50,74 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --radius: 0.75rem;
+  /* 라이트 모드: 따뜻한 크림/샌드 팔레트 — 고급 여행 잡지 느낌 */
+  --background: oklch(0.98 0.008 80);        /* 따뜻한 크림 화이트 */
+  --foreground: oklch(0.18 0.025 260);       /* 깊은 네이비 블랙 */
+  --card: oklch(1 0.004 80);                 /* 거의 순백 카드 */
+  --card-foreground: oklch(0.18 0.025 260);
+  --popover: oklch(1 0.004 80);
+  --popover-foreground: oklch(0.18 0.025 260);
+  --primary: oklch(0.28 0.08 255);           /* 깊은 인디고 네이비 */
+  --primary-foreground: oklch(0.98 0.005 80);
+  --secondary: oklch(0.94 0.015 80);         /* 따뜻한 샌드 */
+  --secondary-foreground: oklch(0.28 0.08 255);
+  --muted: oklch(0.94 0.01 75);
+  --muted-foreground: oklch(0.5 0.02 260);
+  --accent: oklch(0.92 0.025 80);
+  --accent-foreground: oklch(0.22 0.06 255);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.88 0.015 75);
+  --input: oklch(0.91 0.012 78);
+  --ring: oklch(0.55 0.06 255);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.96 0.01 78);
+  --sidebar-foreground: oklch(0.18 0.025 260);
+  --sidebar-primary: oklch(0.28 0.08 255);
+  --sidebar-primary-foreground: oklch(0.98 0.005 80);
+  --sidebar-accent: oklch(0.92 0.018 78);
+  --sidebar-accent-foreground: oklch(0.22 0.06 255);
+  --sidebar-border: oklch(0.88 0.015 75);
+  --sidebar-ring: oklch(0.55 0.06 255);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  /* 다크 모드: 딥 오션 네이비 계열 — 밤바다 여행 무드 */
+  --background: oklch(0.13 0.03 255);        /* 깊은 네이비 블랙 */
+  --foreground: oklch(0.95 0.008 80);        /* 따뜻한 크림 화이트 */
+  --card: oklch(0.18 0.035 255);             /* 조금 밝은 네이비 카드 */
+  --card-foreground: oklch(0.95 0.008 80);
+  --popover: oklch(0.18 0.035 255);
+  --popover-foreground: oklch(0.95 0.008 80);
+  --primary: oklch(0.75 0.1 80);             /* 골드-앰버 액센트 */
+  --primary-foreground: oklch(0.13 0.03 255);
+  --secondary: oklch(0.22 0.04 255);
+  --secondary-foreground: oklch(0.9 0.01 80);
+  --muted: oklch(0.22 0.04 255);
+  --muted-foreground: oklch(0.62 0.03 255);
+  --accent: oklch(0.25 0.05 255);
+  --accent-foreground: oklch(0.92 0.01 80);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.65 0.08 80);
+  --chart-1: oklch(0.75 0.1 80);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar: oklch(0.18 0.035 255);
+  --sidebar-foreground: oklch(0.95 0.008 80);
+  --sidebar-primary: oklch(0.75 0.1 80);
+  --sidebar-primary-foreground: oklch(0.13 0.03 255);
+  --sidebar-accent: oklch(0.25 0.05 255);
+  --sidebar-accent-foreground: oklch(0.92 0.01 80);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.65 0.08 80);
 }
 
 @layer base {
@@ -123,7 +127,50 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: "DM Sans", var(--font-dm-sans), sans-serif;
+    font-feature-settings: "ss01" on, "cv01" on;
+    -webkit-font-smoothing: antialiased;
   }
+
+  /* Playfair Display를 h1~h3에 적용 — 헤드라인에 세리프 고급감 */
+  h1, h2 {
+    font-family: "Playfair Display", var(--font-playfair), serif;
+  }
+}
+
+/* ─── 커스텀 애니메이션 ──────────────────────────────────────────────── */
+
+/* 부드러운 위로 페이드인 — 카드, 섹션 등장에 사용 */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out both;
+}
+
+/* 스태거 딜레이 — 목록 아이템 순차 등장 */
+.animate-delay-100 { animation-delay: 100ms; }
+.animate-delay-200 { animation-delay: 200ms; }
+.animate-delay-300 { animation-delay: 300ms; }
+.animate-delay-400 { animation-delay: 400ms; }
+
+/* 배경 그라디언트 움직임 — 히어로 섹션 분위기 */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-gradient {
+  background-size: 300% 300%;
+  animation: gradient-shift 12s ease infinite;
 }
 
 /* 카카오 지도 팝업 다크모드 스타일

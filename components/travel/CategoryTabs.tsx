@@ -3,7 +3,6 @@
 "use client"
 
 import type { PlaceCategory } from "@/types/travel"
-import { Badge } from "@/components/ui/badge"
 import { CATEGORY_LIST, MARKER_COLORS } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 
@@ -25,60 +24,90 @@ export default function CategoryTabs({
 }: CategoryTabsProps) {
   const currentValue = selected ?? "전체"
 
-  // 탭 버튼 공통 스타일
-  const tabClass = (value: string) =>
-    cn(
-      "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-      "border border-transparent",
-      currentValue === value
-        ? "bg-accent text-accent-foreground"
-        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+  // 선택 상태에 따른 탭 스타일 계산 — 선택 시 카테고리 컬러로 강조
+  const getTabStyle = (value: string, color?: string) => {
+    const isSelected = currentValue === value
+    if (isSelected && color) {
+      return cn(
+        "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
+        "shadow-sm"
+      )
+    }
+    return cn(
+      "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
+      isSelected
+        ? "bg-foreground text-background shadow-sm"
+        : "text-muted-foreground hover:bg-accent hover:text-foreground"
     )
+  }
 
   return (
     // 모바일: 전체(1행) + 카테고리 5개(2행) 고정 2행 레이아웃
     // sm 이상: 전체 + 카테고리 한 줄로 표시
-    <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center">
+    <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center">
       {/* 1행: 전체 탭 단독 (모바일) / sm 이상에서는 카테고리와 같은 줄 */}
-      {/* w-fit: flex-col에서 버튼이 가로로 늘어나지 않도록 내용 크기에 맞게 제한 */}
       <button
         type="button"
         onClick={() => onSelect(null)}
-        className={cn(tabClass("전체"), "w-fit")}
+        className={cn(getTabStyle("전체"), "w-fit")}
         aria-pressed={currentValue === "전체"}
       >
         <span>전체</span>
         {counts["전체"] !== undefined && (
-          <Badge variant="secondary" className="h-5 min-w-5 rounded-full px-1.5 text-xs">
+          <span className={cn(
+            "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs",
+            currentValue === "전체"
+              ? "bg-background/20 text-current"
+              : "bg-muted text-muted-foreground"
+          )}>
             {counts["전체"]}
-          </Badge>
+          </span>
         )}
       </button>
 
       {/* 2행: 카테고리 5개 가로 배치 (모바일) / sm 이상에서는 전체와 같은 줄 */}
-      <div className="flex flex-wrap gap-1">
-        {CATEGORY_LIST.map((category) => (
-          <button
-            key={category}
-            type="button"
-            onClick={() => onSelect(category as PlaceCategory)}
-            className={tabClass(category)}
-            aria-pressed={currentValue === category}
-          >
-            {/* 카테고리 컬러 도트 — MARKER_COLORS 상수 기반 */}
-            <span
-              className="inline-block h-2 w-2 shrink-0 rounded-full"
-              style={{ backgroundColor: MARKER_COLORS[category] }}
-              aria-hidden="true"
-            />
-            <span>{category}</span>
-            {counts[category] !== undefined && (
-              <Badge variant="secondary" className="h-5 min-w-5 rounded-full px-1.5 text-xs">
-                {counts[category]}
-              </Badge>
-            )}
-          </button>
-        ))}
+      <div className="flex flex-wrap gap-1.5">
+        {CATEGORY_LIST.map((category) => {
+          const isSelected = currentValue === category
+          const color = MARKER_COLORS[category]
+
+          return (
+            <button
+              key={category}
+              type="button"
+              onClick={() => onSelect(category as PlaceCategory)}
+              // 선택된 카테고리는 해당 컬러를 배경색으로 사용
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
+                isSelected
+                  ? "text-white shadow-sm"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+              style={isSelected ? { backgroundColor: color } : undefined}
+              aria-pressed={isSelected}
+            >
+              {/* 카테고리 컬러 도트 — 미선택 상태에서만 표시 */}
+              {!isSelected && (
+                <span
+                  className="inline-block h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: color }}
+                  aria-hidden="true"
+                />
+              )}
+              <span>{category}</span>
+              {counts[category] !== undefined && (
+                <span className={cn(
+                  "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs",
+                  isSelected
+                    ? "bg-white/25 text-white"
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {counts[category]}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
