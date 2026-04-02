@@ -29,9 +29,16 @@ const DDAY_TRAVELING = "여행중"
  * - 양수 = 출발 전(D-N), 0 = 당일, 음수 = 출발 후(D+N 또는 여행중/완료)
  */
 export function calculateDday(startDate: string, endDate: string): string {
-  const today = new Date()
-  const start = parseISO(startDate)
-  const end = parseISO(endDate)
+  // KST 기준 오늘 날짜를 구하기 위해 toZonedTime으로 변환 후 시간을 자정으로 리셋
+  // new Date()를 그대로 쓰면 UTC 기준이라 KST 오전 9시 이후 날짜가 하루 밀릴 수 있음
+  const nowKst = toZonedTime(new Date(), TIMEZONE_SEOUL)
+  const today = new Date(nowKst.getFullYear(), nowKst.getMonth(), nowKst.getDate())
+
+  // parseISO("2026-04-03")는 UTC 자정으로 해석되므로 동일하게 날짜만 추출해 비교
+  const startRaw = parseISO(startDate)
+  const start = new Date(startRaw.getFullYear(), startRaw.getMonth(), startRaw.getDate())
+  const endRaw = parseISO(endDate)
+  const end = new Date(endRaw.getFullYear(), endRaw.getMonth(), endRaw.getDate())
 
   // 오늘 기준으로 출발일까지 남은 일수 계산 (오늘 - 출발일 방향)
   // differenceInDays(a, b) = a - b (일 수)
